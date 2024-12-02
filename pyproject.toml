@@ -1,0 +1,21 @@
+[project]
+name = "vex_manager"
+description = "VEX Manager is a tool for Houdini that saves, manages, and imports VEX code presets across projects."
+version = "0.0.1"
+authors = [
+    {name = "Mauricio Gonzalez Soto"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PySide2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "types-houdini"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
