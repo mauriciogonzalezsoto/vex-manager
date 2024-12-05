@@ -2,6 +2,7 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 
 import logging
+import os
 
 from vex_manager.gui.file_explorer_widget import FileExplorerWidget
 from vex_manager.gui.vex_editor_widget import VEXEditorWidget
@@ -27,9 +28,7 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _create_widgets(self) -> None:
         self.library_path_line_edit = QtWidgets.QLineEdit()
-        self.library_path_line_edit.setFocusPolicy(QtCore.Qt.NoFocus)
         self.library_path_line_edit.setPlaceholderText('Library path...')
-        self.library_path_line_edit.setReadOnly(True)
 
         push_button_size = self.library_path_line_edit.sizeHint().height()
 
@@ -74,9 +73,20 @@ class VEXManagerUI(QtWidgets.QWidget):
         splitter.setStretchFactor(1, 1)
 
     def _create_connections(self) -> None:
+        self.library_path_line_edit.returnPressed.connect(self._library_path_return_pressed_line_edit)
         self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked__push_button)
 
         self.context_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
+
+    def _library_path_return_pressed_line_edit(self) -> None:
+        text = self.library_path_line_edit.text()
+
+        if os.path.exists(text):
+            self.context_explorer_widget.set_library_path(text)
+
+            logger.info(f'Library path set to \'{text}\'')
+        else:
+            logger.error(f'\'{text}\' path does not exist.')
 
     def _select_library_path_clicked__push_button(self) -> None:
         library_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
@@ -88,9 +98,9 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _context_explorer_current_item_changed_widget(self, file_path: str) -> None:
         wrangle_node_type = self.context_explorer_widget.get_wrangle_node_type()
-        file_short_name = file_path.removeprefix(self.library_path_line_edit.text())
-        file_short_name = file_short_name.removeprefix(f'/{wrangle_node_type}')
+        file_base_name = os.path.basename(file_path)
+        file_base_name = file_base_name.removesuffix('.vex')
 
-        self.vex_editor_widget.set_file_name(file_short_name)
+        self.vex_editor_widget.set_file_name(file_base_name)
         self.vex_editor_widget.set_file_path(file_path)
         self.vex_editor_widget.set_wrangle_node_type(wrangle_node_type)

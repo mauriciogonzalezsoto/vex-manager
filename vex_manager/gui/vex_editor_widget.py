@@ -57,7 +57,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
                 content = self.vex_code_plain_text_edit.toPlainText()
                 file_to_write.write(content)
 
-            logger.info(f'{self.file_path} saved.')
+            logger.info(f'\'{self.file_path}\' saved.')
         else:
             logger.warning(f'No file selected.')
 
