@@ -136,9 +136,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def _create_combo_box_items(self) -> None:
         for wrangle_node in WrangleNodes:
-            wrangle_node_name, wrangle_node = wrangle_node.value
+            wrangle_node_name, wrangle_node_type = wrangle_node.value
 
-            self.wrangle_nodes_combo_box.addItem(f'{wrangle_node_name} ({wrangle_node})', wrangle_node)
+            self.wrangle_nodes_combo_box.addItem(f'{wrangle_node_name} ({wrangle_node_type})', wrangle_node_type)
 
         self.wrangle_nodes_combo_box.insertSeparator(4)
         self.wrangle_nodes_combo_box.insertSeparator(7)
@@ -164,8 +164,11 @@ class FileExplorerWidget(QtWidgets.QWidget):
                     tree_widget_item.setData(0, QtCore.Qt.UserRole, vex_file_path)
                     self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
-    def get_wrangle_node_type(self) -> str:
+    def get_current_wrangle_node_type(self) -> str:
         return self.wrangle_nodes_combo_box.currentData()
+
+    def set_current_wrangle_node(self, wrangle_node_name: str, wrangle_node_type: str) -> None:
+        self.wrangle_nodes_combo_box.setCurrentText(f'{wrangle_node_name} ({wrangle_node_type})')
 
     def set_library_path(self, library_path: str) -> None:
         self.library_path = library_path

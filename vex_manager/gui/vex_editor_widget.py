@@ -9,6 +9,8 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
 class VEXEditorWidget(QtWidgets.QDialog):
+    create_wrangle_node_clicked = QtCore.Signal()
+    insert_code_clicked = QtCore.Signal()
 
     def __init__(self) -> None:
         super(VEXEditorWidget, self).__init__()
@@ -62,10 +64,10 @@ class VEXEditorWidget(QtWidgets.QDialog):
             logger.warning(f'No file selected.')
 
     def _create_wrangle_node_clicked_push_button(self) -> None:
-        logger.debug('_create_wrangle_node_clicked_push_button')
+        self.create_wrangle_node_clicked.emit()
 
     def _insert_code_clicked_push_button(self) -> None:
-        logger.debug('_insert_code_clicked_push_button')
+        self.insert_code_clicked.emit()
 
     def set_file_name(self, file_name: str) -> None:
         self.name_line_edit.setText(file_name.replace('\\', '/'))
