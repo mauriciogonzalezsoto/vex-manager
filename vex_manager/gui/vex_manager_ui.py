@@ -3,7 +3,9 @@ from PySide2 import QtCore
 
 import hou
 
+import webbrowser
 import logging
+import json
 import os
 
 import vex_manager.core.vex_manager as create_wrangle_node
@@ -16,7 +18,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
 class VEXManagerUI(QtWidgets.QWidget):
-    WINDOW_NAME = 'vexManager'
+    WINDOW_NAME = 'vexmanager'
     WINDOW_TITLE = 'VEX Manager'
 
     def __init__(self) -> None:
@@ -31,8 +33,18 @@ class VEXManagerUI(QtWidgets.QWidget):
         self._create_widgets()
         self._create_layouts()
         self._create_connections()
+        self._get_settings_path()
+        self._load_settings()
 
     def _create_widgets(self) -> None:
+        self.menu_bar = QtWidgets.QMenuBar()
+
+        edit_menu = self.menu_bar.addMenu('Edit')
+        edit_menu.addAction('Save Settings', self._save_settings)
+
+        help_menu = self.menu_bar.addMenu('Help')
+        help_menu.addAction('Help on VEX Manager', self._open_help)
+
         self.library_path_line_edit = QtWidgets.QLineEdit()
         self.library_path_line_edit.setPlaceholderText('Library path...')
 
@@ -48,6 +60,7 @@ class VEXManagerUI(QtWidgets.QWidget):
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(QtCore.QMargins(3, 3, 3, 3))
+        main_layout.setMenuBar(self.menu_bar)
         main_layout.setSpacing(3)
 
         library_path_h_box_layout = QtWidgets.QHBoxLayout()
@@ -87,13 +100,30 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
         self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
 
+    def _save_settings(self) -> None:
+        settings = {'library_path': self.library_path_line_edit.text()}
+
+        with open(self.settings_path, 'w') as file_for_write:
+            json.dump(settings, file_for_write, indent=4)
+
+    def _load_settings(self) -> None:
+        if os.path.exists(self.settings_path):
+            with open(self.settings_path, 'r') as file_for_read:
+                settings = json.load(file_for_read)
+
+            self.library_path_line_edit.setText(settings['library_path'])
+
+            self._library_path_return_pressed_line_edit()
+
+    @staticmethod
+    def _open_help() -> None:
+        webbrowser.open('https://github.com/mauriciogonzalezsoto/vex-manager')
+
     def _library_path_return_pressed_line_edit(self) -> None:
         text = self.library_path_line_edit.text()
 
         if os.path.exists(text):
             self.context_explorer_widget.set_library_path(text)
-
-            logger.info(f'Library path set to \'{text}\'')
         else:
             logger.error(f'\'{text}\' path does not exist.')
 
@@ -135,6 +165,16 @@ class VEXManagerUI(QtWidgets.QWidget):
             create_wrangle_node.insert_vex_code(node=selected_node, vex_file_path=self.current_vex_file_path)
         else:
             logger.warning('There is no node selected.')
+
+    def _get_settings_path(self) -> None:
+        home_path = os.path.expandvars('$HOME')
+        houdini_version = hou.applicationVersionString()
+        major, minor, patch = houdini_version.split('.')
+        houdini_folder_path = os.path.join(home_path, f'houdini{major}.{minor}')
+
+        self.settings_path = os.path.join(
+            houdini_folder_path,
+            f'{VEXManagerUI.WINDOW_NAME}.json')
 
     def showEvent(self, e: any) -> None:
         super(VEXManagerUI, self).showEvent(e)
