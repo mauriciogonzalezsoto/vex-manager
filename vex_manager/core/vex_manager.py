@@ -21,23 +21,26 @@ def get_current_parent_node() -> hou.Node | None:
 
 
 def create_wrangle_node(wrangle_type: str) -> hou.Node | None:
+    wrangle_node = None
     selected_nodes = hou.selectedNodes()
 
     if selected_nodes:
-        parent_node = selected_nodes[0]
+        selected_node = selected_nodes[0]
+        wrangle_node = selected_node.createOutputNode(wrangle_type)
+        wrangle_node.setSelected(True)
     else:
         parent_node = get_current_parent_node()
 
-    if parent_node:
-        try:
-            wrangle_node = parent_node.createNode(wrangle_type)
-            wrangle_node.setSelected(True)
+        if parent_node:
+            try:
+                wrangle_node = parent_node.createNode(wrangle_type)
+                wrangle_node.setSelected(True)
+            except hou.OperationFailed:
+                logger.error(f'Invalid context to create \'{wrangle_type}\' node.')
+        else:
+            logger.error(f'Could not create wrangle node \'{wrangle_type}\'. Parent not found.')
 
-            return wrangle_node
-        except hou.OperationFailed:
-            logger.error(f'Invalid context to create \'{wrangle_type}\' node.')
-    else:
-        logger.error(f'Could not create wrangle node \'{wrangle_type}\'. Parent not found.')
+    return wrangle_node
 
 
 def insert_vex_code(node: hou.Node, vex_file_path: str) -> None:
