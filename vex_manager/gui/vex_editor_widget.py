@@ -4,6 +4,8 @@ from PySide2 import QtCore
 import logging
 import os
 
+from vex_manager.gui.vex_plain_text_edit import VEXPlainTextEdit
+
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
 
@@ -27,7 +29,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
         self.name_line_edit.setFocusPolicy(QtCore.Qt.NoFocus)
         self.name_line_edit.setReadOnly(True)
 
-        self.vex_code_plain_text_edit = QtWidgets.QPlainTextEdit()
+        self.vex_code_plain_text_edit = VEXPlainTextEdit()
 
         self.save_changed_push_button = QtWidgets.QPushButton('Save Changes')
 
@@ -59,7 +61,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
                 content = self.vex_code_plain_text_edit.toPlainText()
                 file_to_write.write(content)
 
-            logger.info(f'\'{self.file_path}\' saved.')
+            logger.debug(f'\'{self.file_path}\' saved.')
         else:
             logger.warning(f'No file selected.')
 
