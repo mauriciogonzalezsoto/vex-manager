@@ -10,6 +10,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
 class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
+    item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
         super(FileExplorerTreeWidget, self).__init__()
@@ -54,6 +55,8 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
                 if os.path.normpath(file_path) != os.path.normpath(new_file_path):
                     os.rename(file_path, new_file_path)
+
+                    self.item_renamed.emit(new_file_name)
 
                     logger.debug(f'Renamed file \'{file_path}\' -> \'{new_file_path}\'')
 

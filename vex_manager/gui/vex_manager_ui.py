@@ -1,5 +1,6 @@
 from PySide2 import QtWidgets
 from PySide2 import QtCore
+from PySide2 import QtGui
 
 import hou
 
@@ -96,6 +97,7 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked__push_button)
 
         self.context_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
+        self.context_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
 
         self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
         self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
@@ -111,7 +113,7 @@ class VEXManagerUI(QtWidgets.QWidget):
             with open(self.settings_path, 'r') as file_for_read:
                 settings = json.load(file_for_read)
 
-            self.library_path_line_edit.setText(settings['library_path'])
+            self.library_path_line_edit.setText(settings.get('library_path', ''))
 
             self._library_path_return_pressed_line_edit()
 
@@ -122,10 +124,11 @@ class VEXManagerUI(QtWidgets.QWidget):
     def _library_path_return_pressed_line_edit(self) -> None:
         text = self.library_path_line_edit.text()
 
-        if os.path.exists(text):
-            self.context_explorer_widget.set_library_path(text)
-        else:
-            logger.error(f'\'{text}\' path does not exist.')
+        if text:
+            if os.path.exists(text):
+                self.context_explorer_widget.set_library_path(text)
+            else:
+                logger.error(f'\'{text}\' path does not exist.')
 
     def _select_library_path_clicked__push_button(self) -> None:
         # library_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
@@ -147,6 +150,9 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.vex_editor_widget.set_file_name(file_base_name)
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
         self.vex_editor_widget.set_wrangle_node_type(wrangle_node_type)
+
+    def _context_explorer_current_item_renamed_widget(self, text: str) -> None:
+        self.vex_editor_widget.set_file_name(text)
 
     def _vex_editor_create_wrangle_node_clicked_widget(self) -> None:
         current_wrangle_node_type = self.context_explorer_widget.get_current_wrangle_node_type()
@@ -176,8 +182,8 @@ class VEXManagerUI(QtWidgets.QWidget):
             houdini_folder_path,
             f'{VEXManagerUI.WINDOW_NAME}.json')
 
-    def showEvent(self, e: any) -> None:
-        super(VEXManagerUI, self).showEvent(e)
+    def showEvent(self, event: QtGui.QShowEvent) -> None:
+        super(VEXManagerUI, self).showEvent(event)
 
         selected_nodes = hou.selectedNodes()
 

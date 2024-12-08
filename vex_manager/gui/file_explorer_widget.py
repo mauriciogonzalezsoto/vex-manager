@@ -16,6 +16,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 class FileExplorerWidget(QtWidgets.QWidget):
     current_item_changed = QtCore.Signal(str)
+    current_item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
         super(FileExplorerWidget, self).__init__()
@@ -56,6 +57,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.wrangle_nodes_combo_box.currentTextChanged.connect(self._wrangle_nodes_current_text_changed_combo_box)
         self.search_line_edit.textChanged.connect(self._search_text_changed_line_edit)
         self.file_explorer_tree_widget.currentItemChanged.connect(self._file_explorer_current_item_changed_tree_widget)
+        self.file_explorer_tree_widget.item_renamed.connect(self._file_explorer_item_renamed_tree_widget)
         self.new_push_button.clicked.connect(self._new_clicked_push_button)
         self.delete_push_button.clicked.connect(self._delete_clicked_push_button)
 
@@ -75,6 +77,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def _file_explorer_current_item_changed_tree_widget(self, current: QtWidgets.QTreeWidgetItem) -> None:
         self.current_item_changed.emit(current.data(0, QtCore.Qt.UserRole) if current else '')
+
+    def _file_explorer_item_renamed_tree_widget(self, text: str) -> None:
+        self.current_item_renamed.emit(text)
 
     def _new_clicked_push_button(self) -> None:
         if self.library_path:
@@ -130,7 +135,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-                logger.info(f'\'{file_path}\' deleted.')
+                logger.debug(f'\'{file_path}\' deleted.')
             else:
                 logger.warning(f'\'{file_path}\' does not exit.')
 
