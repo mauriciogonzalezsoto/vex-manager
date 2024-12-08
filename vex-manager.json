@@ -1,0 +1,13 @@
+{
+  "env": [
+    {
+      "VEX_MANAGER": "$HOUDINI_PACKAGE_PATH/vex-manager"
+    },
+    {
+      "HOUDINI_PATH": "$VEX_MANAGER"
+    },
+    {
+      "PYTHONPATH": "$VEX_MANAGER"
+    }
+  ]
+}
