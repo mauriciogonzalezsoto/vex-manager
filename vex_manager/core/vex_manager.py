@@ -5,6 +5,8 @@ import hou
 import logging
 import os
 
+from vex_manager.config import WrangleNodes
+
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
 
@@ -26,6 +28,11 @@ def create_wrangle_node(wrangle_type: str) -> hou.Node | None:
 
     if selected_nodes:
         selected_node = selected_nodes[0]
+
+        if not selected_node.outputNames():
+            logger.error(f'\'{selected_node.name()}\' has no outputs.')
+            return
+
         wrangle_node = selected_node.createOutputNode(wrangle_type)
         wrangle_node.setSelected(True)
     else:
@@ -44,13 +51,17 @@ def create_wrangle_node(wrangle_type: str) -> hou.Node | None:
 
 
 def insert_vex_code(node: hou.Node, vex_file_path: str) -> None:
-    if os.path.exists(vex_file_path):
+    if not vex_file_path:
+        logger.warning('There is no VEX preset selected to insert.')
+    elif not os.path.exists(vex_file_path):
+        logger.error(f'\'{vex_file_path}\' does not exists.')
+    else:
         with open(vex_file_path) as file_for_read:
             code = file_for_read.read()
 
-        node_parm_names = [parm.name() for parm in node.parms()]
+        wrangle_node_types = [node.value[1] for node in WrangleNodes]
 
-        if 'snippet' in node_parm_names:
+        if node.type().name() in wrangle_node_types:
             snippet_parm = node.parm('snippet')
             current_code = snippet_parm.evalAsString()
 
@@ -61,6 +72,4 @@ def insert_vex_code(node: hou.Node, vex_file_path: str) -> None:
 
             snippet_parm.set(new_code)
         else:
-            logger.error(f'Can not insert VEX code in the selected node \'{node.name()}\'.')
-    else:
-        logger.error(f'\'{vex_file_path}\' does not exists.')
+            logger.error(f'\'{node.name()}\' is not a wrangle node.')
