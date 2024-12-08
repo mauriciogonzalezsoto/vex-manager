@@ -8,7 +8,7 @@ from vex_manager.config import VEXSyntaxis
 class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
     def __init__(self) -> None:
-        super(VEXPlainTextEdit, self).__init__()
+        super().__init__()
 
         self.font = QtGui.QFont()
         self.font.setBold(True)
@@ -21,13 +21,13 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         if event.key() == QtCore.Qt.Key_Tab:
             self.insertPlainText('    ')
         else:
-            super(VEXPlainTextEdit, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
 
 class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
 
     def __init__(self, parent: QtCore.QObject) -> None:
-        super(VEXSyntaxHighlighter, self).__init__(parent)
+        super().__init__(parent)
 
         keywords = '|'.join(VEXSyntaxis.KEYWORDS)
         data_types = '|'.join(VEXSyntaxis.DATA_TYPES)
@@ -54,8 +54,13 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         self.attribute_reg_exp = QtCore.QRegExp(r'[\w]*@[\w-]+')
         self.comment_reg_exp = QtCore.QRegExp(r'//.*')
 
-    def _set_vex_syntax_highlighter(self, reg_exp: QtCore.QRegExp, text: str,
-                                    text_char_format: QtGui.QTextCharFormat) -> None:
+    def _set_vex_syntax_highlighter(
+            self,
+            reg_exp: QtCore.QRegExp,
+            text: str,
+            text_char_format: QtGui.QTextCharFormat
+    ) -> None:
+
         index = reg_exp.indexIn(text)
 
         while index >= 0:

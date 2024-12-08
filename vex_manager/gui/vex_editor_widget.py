@@ -15,7 +15,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
     insert_code_clicked = QtCore.Signal()
 
     def __init__(self) -> None:
-        super(VEXEditorWidget, self).__init__()
+        super().__init__()
 
         self.file_path = ''
         self.wrangle_node_type = ''
@@ -61,7 +61,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
                 content = self.vex_code_plain_text_edit.toPlainText()
                 file_to_write.write(content)
 
-            logger.debug(f'\'{self.file_path}\' saved.')
+            logger.debug(f'{self.file_path!r} saved.')
         else:
             logger.warning(f'No file selected.')
 

@@ -23,7 +23,7 @@ class VEXManagerUI(QtWidgets.QWidget):
     WINDOW_TITLE = 'VEX Manager'
 
     def __init__(self) -> None:
-        super(VEXManagerUI, self).__init__()
+        super().__init__()
 
         self.current_vex_file_path = ''
 
@@ -128,11 +128,9 @@ class VEXManagerUI(QtWidgets.QWidget):
             if os.path.exists(text):
                 self.context_explorer_widget.set_library_path(text)
             else:
-                logger.error(f'\'{text}\' path does not exist.')
+                logger.error(f'{text!r} path does not exist.')
 
     def _select_library_path_clicked__push_button(self) -> None:
-        # library_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
-
         library_path = hou.ui.selectFile(file_type=hou.fileType.Directory, title='Select Folder')
 
         if library_path:
@@ -183,7 +181,7 @@ class VEXManagerUI(QtWidgets.QWidget):
             f'{VEXManagerUI.WINDOW_NAME}.json')
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
-        super(VEXManagerUI, self).showEvent(event)
+        super().showEvent(event)
 
         selected_nodes = hou.selectedNodes()
 

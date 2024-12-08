@@ -13,7 +13,7 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
     item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
-        super(FileExplorerTreeWidget, self).__init__()
+        super().__init__()
 
         self.setHeaderHidden(True)
 
@@ -43,9 +43,9 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         if os.path.isfile(file_path):
             if new_file_name in [item.text(0) for item in self.get_top_level_items()]:
-                logger.error(f'File \'{new_file_name}\' already exists.')
+                logger.error(f'File {new_file_name!r} already exists.')
             elif not self._is_valid_file_name(new_file_name):
-                logger.error(f'\'{new_file_name}\' is not a valid file name.')
+                logger.error(f'{new_file_name!r} is not a valid file name.')
             else:
                 dir_name = os.path.dirname(file_path)
                 new_file_path = os.path.join(dir_name, f'{new_file_name}.vex')
@@ -58,7 +58,7 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
                     self.item_renamed.emit(new_file_name)
 
-                    logger.debug(f'Renamed file \'{file_path}\' -> \'{new_file_path}\'')
+                    logger.debug(f'Renamed file {file_path!r} -> {new_file_path!r}')
 
             self.removeItemWidget(item, column)
 

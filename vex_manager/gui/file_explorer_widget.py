@@ -19,7 +19,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
     current_item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
-        super(FileExplorerWidget, self).__init__()
+        super().__init__()
 
         self.library_path = ''
 
@@ -120,7 +120,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
             if not os.path.exists(vex_file_folder_path):
                 os.mkdir(vex_file_folder_path)
 
-                logger.info(f'\'{vex_file_folder_path}\' folder created.')
+                logger.info(f'{vex_file_folder_path!r} folder created.')
 
             if not os.path.exists(new_vex_file_path):
                 open(new_vex_file_path, 'w').close()
@@ -135,9 +135,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-                logger.debug(f'\'{file_path}\' deleted.')
+                logger.debug(f'{file_path!r} deleted.')
             else:
-                logger.warning(f'\'{file_path}\' does not exit.')
+                logger.warning(f'{file_path!r} does not exit.')
 
     def _create_combo_box_items(self) -> None:
         for wrangle_node in WrangleNodes:
