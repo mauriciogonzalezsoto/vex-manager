@@ -54,7 +54,7 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.select_library_path_push_button = QtWidgets.QPushButton('...')
         self.select_library_path_push_button.setFixedSize(QtCore.QSize(push_button_size, push_button_size))
 
-        self.context_explorer_widget = FileExplorerWidget()
+        self.file_explorer_widget = FileExplorerWidget()
 
         self.vex_editor_widget = VEXEditorWidget()
 
@@ -76,7 +76,7 @@ class VEXManagerUI(QtWidgets.QWidget):
         splitter.addWidget(left_widget)
 
         left_layout = QtWidgets.QVBoxLayout()
-        left_layout.addWidget(self.context_explorer_widget)
+        left_layout.addWidget(self.file_explorer_widget)
         left_layout.setContentsMargins(QtCore.QMargins())
         left_widget.setLayout(left_layout)
 
@@ -93,20 +93,15 @@ class VEXManagerUI(QtWidgets.QWidget):
         splitter.setStretchFactor(1, 1)
 
     def _create_connections(self) -> None:
-        self.library_path_line_edit.returnPressed.connect(self._library_path_return_pressed_line_edit)
-        self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked__push_button)
+        self.library_path_line_edit.editingFinished.connect(self._library_path_editing_finished_line_edit)
+        self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked_push_button)
 
-        self.context_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
-        self.context_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
+        self.file_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
+        self.file_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
 
+        self.vex_editor_widget.name_editing_finished.connect(self._vex_editor_name_editing_finished_widget)
         self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
         self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
-
-    def _save_settings(self) -> None:
-        settings = {'library_path': self.library_path_line_edit.text()}
-
-        with open(self.settings_path, 'w') as file_for_write:
-            json.dump(settings, file_for_write, indent=4)
 
     def _load_settings(self) -> None:
         if os.path.exists(self.settings_path):
@@ -115,45 +110,49 @@ class VEXManagerUI(QtWidgets.QWidget):
 
             self.library_path_line_edit.setText(settings.get('library_path', ''))
 
-            self._library_path_return_pressed_line_edit()
+            self._library_path_editing_finished_line_edit()
+
+    def _save_settings(self) -> None:
+        settings = {'library_path': self.library_path_line_edit.text()}
+
+        with open(self.settings_path, 'w') as file_for_write:
+            json.dump(settings, file_for_write, indent=4)
 
     @staticmethod
     def _open_help() -> None:
         webbrowser.open('https://github.com/mauriciogonzalezsoto/vex-manager')
 
-    def _library_path_return_pressed_line_edit(self) -> None:
+    def _library_path_editing_finished_line_edit(self) -> None:
         text = self.library_path_line_edit.text()
 
         if text:
             if os.path.exists(text):
-                self.context_explorer_widget.set_library_path(text)
+                self.file_explorer_widget.set_library_path(text)
             else:
                 logger.error(f'{text!r} path does not exist.')
 
-    def _select_library_path_clicked__push_button(self) -> None:
+    def _select_library_path_clicked_push_button(self) -> None:
         library_path = hou.ui.selectFile(file_type=hou.fileType.Directory, title='Select Folder')
 
         if library_path:
             self.library_path_line_edit.setText(library_path)
 
-            self.context_explorer_widget.set_library_path(library_path)
+            self.file_explorer_widget.set_library_path(library_path)
 
     def _context_explorer_current_item_changed_widget(self, file_path: str) -> None:
         self.current_vex_file_path = file_path
-
-        wrangle_node_type = self.context_explorer_widget.get_current_wrangle_node_type()
-        file_base_name = os.path.basename(self.current_vex_file_path)
-        file_base_name = file_base_name.removesuffix('.vex')
-
-        self.vex_editor_widget.set_file_name(file_base_name)
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
-        self.vex_editor_widget.set_wrangle_node_type(wrangle_node_type)
+        self.vex_editor_widget.display_code()
 
-    def _context_explorer_current_item_renamed_widget(self, text: str) -> None:
-        self.vex_editor_widget.set_file_name(text)
+    def _context_explorer_current_item_renamed_widget(self, file_path: str) -> None:
+        self.current_vex_file_path = file_path
+        self.vex_editor_widget.set_file_path(self.current_vex_file_path)
+
+    def _vex_editor_name_editing_finished_widget(self, name: str) -> None:
+        self.file_explorer_widget.rename_current_item(name)
 
     def _vex_editor_create_wrangle_node_clicked_widget(self) -> None:
-        current_wrangle_node_type = self.context_explorer_widget.get_current_wrangle_node_type()
+        current_wrangle_node_type = self.file_explorer_widget.get_current_wrangle_node_type()
 
         wrangle_node = create_wrangle_node.create_wrangle_node(wrangle_type=current_wrangle_node_type)
 
@@ -164,9 +163,7 @@ class VEXManagerUI(QtWidgets.QWidget):
         selected_nodes = hou.selectedNodes()
 
         if selected_nodes:
-            selected_node = selected_nodes[-1]
-
-            create_wrangle_node.insert_vex_code(node=selected_node, vex_file_path=self.current_vex_file_path)
+            create_wrangle_node.insert_vex_code(node=selected_nodes[-1], vex_file_path=self.current_vex_file_path)
         else:
             logger.warning('There is no node selected.')
 
@@ -191,7 +188,7 @@ class VEXManagerUI(QtWidgets.QWidget):
             for wrangle_node in WrangleNodes:
                 wrangle_node_name, wrangle_node_type = wrangle_node.value
                 if selected_node.type().name() == wrangle_node_type:
-                    self.context_explorer_widget.set_current_wrangle_node(
+                    self.file_explorer_widget.set_current_wrangle_node(
                         wrangle_node_name=wrangle_node_name,
                         wrangle_node_type=wrangle_node_type)
 

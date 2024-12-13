@@ -1,7 +1,8 @@
 from PySide2 import QtWidgets
 from PySide2 import QtCore
-
 import shiboken2
+
+from pathlib import Path
 import logging
 import glob
 import os
@@ -69,17 +70,15 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         for i in range(self.file_explorer_tree_widget.topLevelItemCount()):
             item = self.file_explorer_tree_widget.topLevelItem(i)
-
-            if text in item.text(0):
-                item.setHidden(False)
-            else:
-                item.setHidden(True)
+            item.setHidden(text in item.text(0))
 
     def _file_explorer_current_item_changed_tree_widget(self, current: QtWidgets.QTreeWidgetItem) -> None:
-        self.current_item_changed.emit(current.data(0, QtCore.Qt.UserRole) if current else '')
+        data = current.data(0, QtCore.Qt.UserRole) if current else ''
 
-    def _file_explorer_item_renamed_tree_widget(self, text: str) -> None:
-        self.current_item_renamed.emit(text)
+        self.current_item_changed.emit(data)
+
+    def _file_explorer_item_renamed_tree_widget(self, file_path: str) -> None:
+        self.current_item_renamed.emit(file_path)
 
     def _new_clicked_push_button(self) -> None:
         if self.library_path:
@@ -107,9 +106,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
             new_vex_file_name = f'VEX{value:02d}'
             vex_file_folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
-
             new_vex_file_path = os.path.join(vex_file_folder_path, f'{new_vex_file_name}.vex')
-            new_vex_file_path = new_vex_file_path.replace('\\', '/')
 
             tree_widget_item = QtWidgets.QTreeWidgetItem()
             tree_widget_item.setData(0, QtCore.Qt.UserRole, new_vex_file_path)
@@ -159,10 +156,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
             if os.path.exists(current_folder_path):
                 for vex_file_path in glob.glob(os.path.join(current_folder_path, '*.vex')):
-                    base_name = os.path.basename(vex_file_path)
-                    base_name = base_name.removesuffix('.vex')
-
-                    vex_file_path = vex_file_path.replace('\\', '/')
+                    base_name = Path(vex_file_path).stem
 
                     tree_widget_item = QtWidgets.QTreeWidgetItem()
                     tree_widget_item.setText(0, base_name)
@@ -171,6 +165,10 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def get_current_wrangle_node_type(self) -> str:
         return self.wrangle_nodes_combo_box.currentData()
+
+    def rename_current_item(self, name: str) -> None:
+        current_item = self.file_explorer_tree_widget.currentItem()
+        self.file_explorer_tree_widget.rename_item(column=0, item=current_item, new_name=name)
 
     def set_current_wrangle_node(self, wrangle_node_name: str, wrangle_node_type: str) -> None:
         self.wrangle_nodes_combo_box.setCurrentText(f'{wrangle_node_name} ({wrangle_node_type})')

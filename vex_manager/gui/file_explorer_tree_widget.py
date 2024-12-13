@@ -29,6 +29,12 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         return bool(match)
 
+    def _rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, line_edit: QtWidgets.QLineEdit) -> None:
+        new_name = line_edit.text()
+
+        self.rename_item(column=column, item=item, new_name=new_name)
+        self.removeItemWidget(item, column)
+
     def get_top_level_items(self) -> list[QtWidgets.QTreeWidgetItem]:
         top_level_items = []
 
@@ -37,30 +43,28 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         return top_level_items
 
-    def _rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, line_edit: QtWidgets.QLineEdit) -> None:
+    def rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, new_name: str) -> None:
         file_path = item.data(0, QtCore.Qt.UserRole)
-        new_file_name = line_edit.text()
 
-        if os.path.isfile(file_path):
-            if new_file_name in [item.text(0) for item in self.get_top_level_items()]:
-                logger.error(f'File {new_file_name!r} already exists.')
-            elif not self._is_valid_file_name(new_file_name):
-                logger.error(f'{new_file_name!r} is not a valid file name.')
+        if new_name != item.text(0):
+            if new_name in [item.text(0) for item in self.get_top_level_items()]:
+                logger.error(f'File {new_name!r} already exists.')
+            elif not self._is_valid_file_name(new_name):
+                logger.error(f'{new_name!r} is not a valid file name.')
             else:
                 dir_name = os.path.dirname(file_path)
-                new_file_path = os.path.join(dir_name, f'{new_file_name}.vex')
+                new_file_path = os.path.join(dir_name, f'{new_name}.vex')
 
-                item.setText(column, new_file_name)
+                item.setText(column, new_name)
                 item.setData(column, QtCore.Qt.UserRole, new_file_path)
 
-                if os.path.normpath(file_path) != os.path.normpath(new_file_path):
-                    os.rename(file_path, new_file_path)
+                os.rename(file_path, new_file_path)
 
-                    self.item_renamed.emit(new_file_name)
+                self.item_renamed.emit(new_file_path)
 
-                    logger.debug(f'Renamed file {file_path!r} -> {new_file_path!r}')
-
-            self.removeItemWidget(item, column)
+                logger.debug(f'Renamed file {file_path!r} -> {new_file_path!r}')
+        else:
+            logger.debug(f'{new_name!r} is the same name.')
 
     def editItem(self, item: QtWidgets.QTreeWidgetItem, column: int) -> None:
         line_edit = QtWidgets.QLineEdit(self)
