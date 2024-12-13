@@ -12,6 +12,7 @@ import os
 from vex_manager.gui.file_explorer_widget import FileExplorerWidget
 from vex_manager.gui.vex_editor_widget import VEXEditorWidget
 from vex_manager.config import WrangleNodes
+import vex_manager.utils as utils
 import vex_manager.core as core
 
 
@@ -25,6 +26,8 @@ class VEXManagerUI(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
+        self.settings_path = utils.get_settings_path()
+
         self.current_vex_file_path = ''
 
         self.resize(800, 600)
@@ -34,7 +37,6 @@ class VEXManagerUI(QtWidgets.QWidget):
         self._create_widgets()
         self._create_layouts()
         self._create_connections()
-        self._get_settings_path()
         self._load_settings()
 
     def _create_widgets(self) -> None:
@@ -166,16 +168,6 @@ class VEXManagerUI(QtWidgets.QWidget):
             core.insert_vex_code(node=selected_nodes[-1], vex_file_path=self.current_vex_file_path)
         else:
             logger.warning('There is no node selected.')
-
-    def _get_settings_path(self) -> None:
-        home_path = os.path.expandvars('$HOME')
-        houdini_version = hou.applicationVersionString()
-        major, minor, patch = houdini_version.split('.')
-        houdini_folder_path = os.path.join(home_path, f'houdini{major}.{minor}')
-
-        self.settings_path = os.path.join(
-            houdini_folder_path,
-            f'{VEXManagerUI.WINDOW_NAME}.json')
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)

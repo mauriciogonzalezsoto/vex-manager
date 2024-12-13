@@ -3,7 +3,8 @@ from PySide2 import QtCore
 
 import logging
 import os
-import re
+
+import vex_manager.utils as utils
 
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
@@ -21,13 +22,6 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
     def _create_connections(self) -> None:
         self.itemDoubleClicked.connect(self.editItem)
-
-    @staticmethod
-    def _is_valid_file_name(file_name: str) -> bool:
-        pattern = r'^[A-Za-z_][A-Za-z0-9_]*$'
-        match = re.match(pattern, file_name)
-
-        return bool(match)
 
     def _rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, line_edit: QtWidgets.QLineEdit) -> None:
         new_name = line_edit.text()
@@ -49,7 +43,7 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
         if new_name != item.text(0):
             if new_name in [item.text(0) for item in self.get_top_level_items()]:
                 logger.error(f'File {new_name!r} already exists.')
-            elif not self._is_valid_file_name(new_name):
+            elif not utils.is_valid_file_name(new_name):
                 logger.error(f'{new_name!r} is not a valid file name.')
             else:
                 dir_name = os.path.dirname(file_path)
