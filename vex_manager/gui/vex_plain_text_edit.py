@@ -45,6 +45,9 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         self.attribute_text_char_format = QtGui.QTextCharFormat()
         self.attribute_text_char_format.setForeground(QtGui.QColor('yellow'))
 
+        self.string_literal_text_char_format = QtGui.QTextCharFormat()
+        self.string_literal_text_char_format.setForeground(QtGui.QColor('green'))
+
         self.comment_text_char_format = QtGui.QTextCharFormat()
         self.comment_text_char_format.setForeground(QtGui.QColor('gray'))
 
@@ -52,6 +55,7 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         self.data_types_reg_exp = QtCore.QRegExp(rf'\b({data_types})\b')
         self.vex_functions_reg_exp = QtCore.QRegExp(rf'\b({vex_functions})\b')
         self.attribute_reg_exp = QtCore.QRegExp(r'[\w]*@[\w-]+')
+        self.string_literal_reg_exp = QtCore.QRegExp(r'(["\'].*["\'])')
         self.comment_reg_exp = QtCore.QRegExp(r'//.*')
 
     def _set_vex_syntax_highlighter(
@@ -88,6 +92,11 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
             reg_exp=self.attribute_reg_exp,
             text=text,
             text_char_format=self.attribute_text_char_format)
+
+        self._set_vex_syntax_highlighter(
+            reg_exp=self.string_literal_reg_exp,
+            text=text,
+            text_char_format=self.string_literal_text_char_format)
 
         self._set_vex_syntax_highlighter(
             reg_exp=self.comment_reg_exp,
