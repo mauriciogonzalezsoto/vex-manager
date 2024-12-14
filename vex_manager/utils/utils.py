@@ -5,7 +5,7 @@ import re
 
 
 def is_valid_file_name(file_name: str) -> bool:
-    pattern = r'^[A-Za-z_][A-Za-z0-9_]*$'
+    pattern = r'^[\w\-. ]+$'
     match = re.match(pattern, file_name)
 
     return bool(match)
