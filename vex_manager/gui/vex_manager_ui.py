@@ -62,7 +62,7 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(QtCore.QMargins(3, 3, 3, 3))
+        main_layout.setContentsMargins(QtCore.QMargins(6, 3, 6, 6))
         main_layout.setMenuBar(self.menu_bar)
         main_layout.setSpacing(3)
 
@@ -98,6 +98,8 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.library_path_line_edit.editingFinished.connect(self._library_path_editing_finished_line_edit)
         self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked_push_button)
 
+        self.file_explorer_widget.current_wrangle_node_text_changed.connect(
+            self._file_explorer_current_wrangle_node_text_changed)
         self.file_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
         self.file_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
 
@@ -140,6 +142,10 @@ class VEXManagerUI(QtWidgets.QWidget):
             self.library_path_line_edit.setText(library_path)
 
             self.file_explorer_widget.set_library_path(library_path)
+
+    def _file_explorer_current_wrangle_node_text_changed(self) -> None:
+        self.vex_editor_widget.set_file_path(self.current_vex_file_path)
+        self.vex_editor_widget.display_code()
 
     def _context_explorer_current_item_changed_widget(self, file_path: str) -> None:
         self.current_vex_file_path = file_path

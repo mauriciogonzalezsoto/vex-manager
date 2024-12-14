@@ -18,6 +18,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 class FileExplorerWidget(QtWidgets.QWidget):
     current_item_changed = QtCore.Signal(str)
     current_item_renamed = QtCore.Signal(str)
+    current_wrangle_node_text_changed = QtCore.Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -64,6 +65,8 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def _wrangle_nodes_current_text_changed_combo_box(self) -> None:
         self._create_tree_widget_items()
+
+        self.current_wrangle_node_text_changed.emit()
 
     def _search_text_changed_line_edit(self, text: str) -> None:
         text = text.lower()

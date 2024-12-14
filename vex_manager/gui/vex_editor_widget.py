@@ -77,14 +77,17 @@ class VEXEditorWidget(QtWidgets.QDialog):
         self.insert_code_clicked.emit()
 
     def display_code(self) -> None:
-        if self.file_path:
+        if os.path.exists(self.file_path):
             with open(self.file_path) as file_for_read:
                 self.vex_code_plain_text_edit.setPlainText(file_for_read.read())
         else:
             self.vex_code_plain_text_edit.setPlainText('')
 
     def set_file_path(self, file_path: str) -> None:
+        self.file_path = file_path
+
         if os.path.exists(file_path):
-            self.file_path = file_path
             base_name = Path(self.file_path).stem
             self.name_line_edit.setText(base_name)
+        else:
+            self.name_line_edit.setText('')
