@@ -3,7 +3,6 @@ from __future__ import annotations
 import hou
 
 import logging
-import os
 
 from vex_manager.config import WrangleNodes
 
@@ -50,26 +49,18 @@ def create_wrangle_node(wrangle_type: str) -> hou.Node | None:
     return wrangle_node
 
 
-def insert_vex_code(node: hou.Node, vex_file_path: str) -> None:
-    if not vex_file_path:
-        logger.warning('There is no VEX preset selected to insert.')
-    elif not os.path.exists(vex_file_path):
-        logger.error(f'{vex_file_path!r} does not exists.')
-    else:
-        with open(vex_file_path) as file_for_read:
-            code = file_for_read.read()
+def insert_vex_code(node: hou.Node, vex_code: str) -> None:
+    wrangle_node_types = [node.value[1] for node in WrangleNodes]
 
-        wrangle_node_types = [node.value[1] for node in WrangleNodes]
+    if node.type().name() in wrangle_node_types:
+        snippet_parm = node.parm('snippet')
+        current_code = snippet_parm.evalAsString()
 
-        if node.type().name() in wrangle_node_types:
-            snippet_parm = node.parm('snippet')
-            current_code = snippet_parm.evalAsString()
-
-            if current_code:
-                new_code = f'{current_code}\n\n{code}'
-            else:
-                new_code = code
-
-            snippet_parm.set(new_code)
+        if current_code:
+            new_vex_code = f'{current_code}\n\n{vex_code}'
         else:
-            logger.error(f'{node.name()!r} is not a wrangle node.')
+            new_vex_code = vex_code
+
+        snippet_parm.set(new_vex_code)
+    else:
+        logger.error(f'{node.name()!r} is not a wrangle node.')
