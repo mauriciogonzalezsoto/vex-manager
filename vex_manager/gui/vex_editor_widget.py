@@ -83,6 +83,9 @@ class VEXEditorWidget(QtWidgets.QDialog):
         else:
             self.vex_code_plain_text_edit.setPlainText('')
 
+    def get_vex_code(self) -> str:
+        return self.vex_code_plain_text_edit.toPlainText()
+
     def set_file_path(self, file_path: str) -> None:
         self.file_path = file_path
 

@@ -2,14 +2,12 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 import shiboken2
 
-from pathlib import Path
 import logging
-import glob
 import os
-import re
 
 from vex_manager.gui.file_explorer_tree_widget import FileExplorerTreeWidget
 from vex_manager.config import WrangleNodes
+import vex_manager.core as core
 
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
@@ -85,45 +83,15 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def _new_clicked_push_button(self) -> None:
         if self.library_path:
-            is_new_vex_file_name_exists = False
-            new_vex_file_name = 'VEX01'
-            value = 1
-
-            top_level_items = self.file_explorer_tree_widget.get_top_level_items()
-            top_level_items.sort(reverse=True)
-
-            for item in top_level_items:
-                if item.text(0) == new_vex_file_name:
-                    is_new_vex_file_name_exists = True
-                    break
-
-            if is_new_vex_file_name_exists:
-                for item in top_level_items:
-                    match = re.search(r'VEX(\d{2})', item.text(0))
-
-                    if match:
-                        current_value = int(match.group(1))
-
-                        if value <= current_value:
-                            value = current_value + 1
-
-            new_vex_file_name = f'VEX{value:02d}'
-            vex_file_folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
-            new_vex_file_path = os.path.join(vex_file_folder_path, f'{new_vex_file_name}.vex')
+            folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData(QtCore.Qt.UserRole))
+            new_vex_file_path, base_name = core.create_new_vex_file(folder_path)
 
             tree_widget_item = QtWidgets.QTreeWidgetItem()
             tree_widget_item.setData(0, QtCore.Qt.UserRole, new_vex_file_path)
             tree_widget_item.setSelected(True)
-            tree_widget_item.setText(0, new_vex_file_name)
+            tree_widget_item.setText(0, base_name)
             self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
-            if not os.path.exists(vex_file_folder_path):
-                os.mkdir(vex_file_folder_path)
-
-                logger.info(f'{vex_file_folder_path!r} folder created.')
-
-            if not os.path.exists(new_vex_file_path):
-                open(new_vex_file_path, 'w').close()
         else:
             logger.warning('Library path not set.')
 
@@ -131,13 +99,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
         for item in self.file_explorer_tree_widget.selectedItems():
             file_path = item.data(0, QtCore.Qt.UserRole)
             shiboken2.delete(item)
-
-            if os.path.exists(file_path):
-                os.remove(file_path)
-
-                logger.debug(f'{file_path!r} deleted.')
-            else:
-                logger.warning(f'{file_path!r} does not exit.')
+            core.delete_file(file_path)
 
     def _create_combo_box_items(self) -> None:
         for wrangle_node in WrangleNodes:
@@ -153,18 +115,13 @@ class FileExplorerWidget(QtWidgets.QWidget):
         if self.library_path:
             self.file_explorer_tree_widget.clear()
 
-            current_folder_path = os.path.join(
-                self.library_path,
-                self.wrangle_nodes_combo_box.currentData(QtCore.Qt.UserRole))
+            folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
 
-            if os.path.exists(current_folder_path):
-                for vex_file_path in glob.glob(os.path.join(current_folder_path, '*.vex')):
-                    base_name = Path(vex_file_path).stem
-
-                    tree_widget_item = QtWidgets.QTreeWidgetItem()
-                    tree_widget_item.setText(0, base_name)
-                    tree_widget_item.setData(0, QtCore.Qt.UserRole, vex_file_path)
-                    self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
+            for file_path, base_name in core.get_vex_files(folder_path):
+                tree_widget_item = QtWidgets.QTreeWidgetItem()
+                tree_widget_item.setText(0, base_name)
+                tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
+                self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
     def get_current_wrangle_node_type(self) -> str:
         return self.wrangle_nodes_combo_box.currentData()

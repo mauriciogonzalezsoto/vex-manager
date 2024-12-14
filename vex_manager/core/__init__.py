@@ -1,3 +1,8 @@
 from vex_manager.core.houdini_node_manager import get_current_parent_node
 from vex_manager.core.houdini_node_manager import create_wrangle_node
 from vex_manager.core.houdini_node_manager import insert_vex_code
+
+from vex_manager.core.file_manager import create_new_vex_file
+from vex_manager.core.file_manager import delete_file
+from vex_manager.core.file_manager import get_vex_files
+from vex_manager.core.file_manager import rename_vex_file
