@@ -1,6 +1,8 @@
 # vex-manager
 VEX Manager is a tool for Houdini that saves, manages, and imports VEX code presets across projects.
 
+![Texture Connector](.github/vex_manager_ui.png)
+
 ## Table of Contents
 - [Installation](#installation)
 - [Shelf Button Creation](#shelf-button-creation)
