@@ -12,6 +12,12 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
 def create_new_vex_file(folder_path: str) -> tuple[str, str]:
+    library_path = os.path.dirname(folder_path)
+
+    if not os.path.exists(library_path):
+        logger.error(f'Library path {library_path!r} does not exist.')
+        return '', ''
+
     files = glob.glob(f'{folder_path}/*.vex')
     files.sort(reverse=True)
 

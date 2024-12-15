@@ -6,6 +6,8 @@ import logging
 import os
 
 from vex_manager.gui.vex_plain_text_edit import VEXPlainTextEdit
+import vex_manager.utils as utils
+import vex_manager.core as core
 
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
@@ -13,6 +15,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 class VEXEditorWidget(QtWidgets.QDialog):
     name_editing_finished = QtCore.Signal(str)
+    save_clicked = QtCore.Signal()
     create_wrangle_node_clicked = QtCore.Signal()
     insert_code_clicked = QtCore.Signal()
 
@@ -20,6 +23,9 @@ class VEXEditorWidget(QtWidgets.QDialog):
         super().__init__()
 
         self.file_path = ''
+        self.base_name = ''
+        self.library_path = ''
+        self.wrangle_node_type = ''
 
         self._create_widgets()
         self._create_layouts()
@@ -58,23 +64,39 @@ class VEXEditorWidget(QtWidgets.QDialog):
     def _name_editing_finished_line_edit(self) -> None:
         name = self.name_line_edit.text()
 
-        self.name_editing_finished.emit(name)
+        if utils.is_valid_file_name(name):
+            self.name_editing_finished.emit(name)
+        else:
+            logger.error(f'Invalid file name {name!r}')
 
     def _save_changed_clicked_push_button(self) -> None:
         if self.file_path:
-            with open(self.file_path, 'w') as file_to_write:
-                content = self.vex_code_plain_text_edit.toPlainText()
-                file_to_write.write(content)
-
-            logger.debug(f'{self.file_path!r} saved.')
+            self._save_file()
         else:
-            logger.warning(f'No file selected.')
+            if os.path.exists(self.library_path):
+                folder_path = os.path.join(self.library_path, self.wrangle_node_type)
+                self.file_path, self.base_name = core.create_new_vex_file(folder_path)
+
+                self._save_file()
+
+                self.save_clicked.emit()
+            else:
+                logger.error(f'Library path {self.library_path} does not exist')
 
     def _create_wrangle_node_clicked_push_button(self) -> None:
         self.create_wrangle_node_clicked.emit()
 
     def _insert_code_clicked_push_button(self) -> None:
         self.insert_code_clicked.emit()
+
+    def _save_file(self) -> None:
+        with open(self.file_path, 'w') as file_to_write:
+            content = self.vex_code_plain_text_edit.toPlainText()
+            file_to_write.write(content)
+
+        self.name_line_edit.setText(self.base_name)
+
+        logger.debug(f'{self.file_path!r} saved.')
 
     def display_code(self) -> None:
         if os.path.exists(self.file_path):
@@ -83,6 +105,9 @@ class VEXEditorWidget(QtWidgets.QDialog):
         else:
             self.vex_code_plain_text_edit.setPlainText('')
 
+    def get_current_file_path(self) -> str:
+        return self.file_path
+
     def get_vex_code(self) -> str:
         return self.vex_code_plain_text_edit.toPlainText()
 
@@ -90,7 +115,13 @@ class VEXEditorWidget(QtWidgets.QDialog):
         self.file_path = file_path
 
         if os.path.exists(file_path):
-            base_name = Path(self.file_path).stem
-            self.name_line_edit.setText(base_name)
+            self.base_name = Path(self.file_path).stem
+            self.name_line_edit.setText(self.base_name)
         else:
             self.name_line_edit.setText('')
+
+    def set_library_path(self, library_path: str) -> None:
+        self.library_path = library_path
+
+    def set_wrangle_node_type(self, wrangle_node_type: str) -> None:
+        self.wrangle_node_type = wrangle_node_type

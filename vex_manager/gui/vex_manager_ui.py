@@ -20,7 +20,7 @@ logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
 class VEXManagerUI(QtWidgets.QWidget):
-    WINDOW_NAME = 'vexmanager'
+    WINDOW_NAME = 'vexManager'
     WINDOW_TITLE = 'VEX Manager'
 
     def __init__(self) -> None:
@@ -104,46 +104,61 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.file_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
 
         self.vex_editor_widget.name_editing_finished.connect(self._vex_editor_name_editing_finished_widget)
+        self.vex_editor_widget.save_clicked.connect(self._vex_editor_saved_clicked_widget)
         self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
         self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
 
     def _load_settings(self) -> None:
+        settings = {}
+
         if os.path.exists(self.settings_path):
             with open(self.settings_path, 'r') as file_for_read:
                 settings = json.load(file_for_read)
 
-            self.library_path_line_edit.setText(settings.get('library_path', ''))
+        self.library_path_line_edit.setText(settings.get('library_path', ''))
 
-            self._library_path_editing_finished_line_edit()
+        self._library_path_editing_finished_line_edit()
 
     def _save_settings(self) -> None:
         settings = {'library_path': self.library_path_line_edit.text()}
 
-        with open(self.settings_path, 'w') as file_for_write:
-            json.dump(settings, file_for_write, indent=4)
+        if self.settings_path:
+            with open(self.settings_path, 'w') as file_for_write:
+                json.dump(settings, file_for_write, indent=4)
+        else:
+            logger.error(f'Settings path is empty.')
 
     @staticmethod
     def _open_help() -> None:
         webbrowser.open('https://github.com/mauriciogonzalezsoto/vex-manager')
 
     def _library_path_editing_finished_line_edit(self) -> None:
-        text = self.library_path_line_edit.text()
+        library_path = self.library_path_line_edit.text()
+        library_path = hou.text.expandString(library_path)
 
-        if text:
-            if os.path.exists(text):
-                self.file_explorer_widget.set_library_path(text)
-            else:
-                logger.error(f'{text!r} path does not exist.')
+        if library_path:
+            if not os.path.exists(library_path):
+                logger.error(f'Library path {library_path!r} does not exist.')
+
+            self.file_explorer_widget.set_library_path(library_path)
+
+            self.vex_editor_widget.set_library_path(library_path)
+            self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
 
     def _select_library_path_clicked_push_button(self) -> None:
         library_path = hou.ui.selectFile(file_type=hou.fileType.Directory, title='Select Folder')
+        library_path = hou.text.expandString(library_path)
 
         if library_path:
             self.library_path_line_edit.setText(library_path)
 
             self.file_explorer_widget.set_library_path(library_path)
 
+            self.vex_editor_widget.set_library_path(library_path)
+            self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
+
     def _file_explorer_current_wrangle_node_text_changed(self) -> None:
+        self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
         self.vex_editor_widget.display_code()
 
@@ -156,8 +171,12 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.current_vex_file_path = file_path
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
 
-    def _vex_editor_name_editing_finished_widget(self, name: str) -> None:
-        self.file_explorer_widget.rename_current_item(name)
+    def _vex_editor_name_editing_finished_widget(self, new_name: str) -> None:
+        self.file_explorer_widget.rename_current_item(new_name)
+
+    def _vex_editor_saved_clicked_widget(self) -> None:
+        self.file_explorer_widget.set_current_path(self.vex_editor_widget.get_current_file_path())
+        self.file_explorer_widget.select_current_item()
 
     def _vex_editor_create_wrangle_node_clicked_widget(self) -> None:
         current_wrangle_node_type = self.file_explorer_widget.get_current_wrangle_node_type()

@@ -2,6 +2,7 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 import shiboken2
 
+from pathlib import Path
 import logging
 import os
 
@@ -22,6 +23,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.library_path = ''
+        self.current_item_path = ''
+
+        self.file_system_watcher = QtCore.QFileSystemWatcher()
 
         self._create_widgets()
         self._create_layouts()
@@ -54,6 +58,8 @@ class FileExplorerWidget(QtWidgets.QWidget):
         main_layout.addLayout(edit_h_box_layout)
 
     def _create_connections(self) -> None:
+        self.file_system_watcher.directoryChanged.connect(self._directory_changed_file_system_watcher)
+
         self.wrangle_nodes_combo_box.currentTextChanged.connect(self._wrangle_nodes_current_text_changed_combo_box)
         self.search_line_edit.textChanged.connect(self._search_text_changed_line_edit)
         self.file_explorer_tree_widget.currentItemChanged.connect(self._file_explorer_current_item_changed_tree_widget)
@@ -61,7 +67,14 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.new_push_button.clicked.connect(self._new_clicked_push_button)
         self.delete_push_button.clicked.connect(self._delete_clicked_push_button)
 
+    def _directory_changed_file_system_watcher(self) -> None:
+        self._create_tree_widget_items()
+        self.select_current_item()
+
+        logger.debug('File system watcher updated files.')
+
     def _wrangle_nodes_current_text_changed_combo_box(self) -> None:
+        self._set_file_system_watcher()
         self._create_tree_widget_items()
 
         self.current_wrangle_node_text_changed.emit()
@@ -82,18 +95,22 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.current_item_renamed.emit(file_path)
 
     def _new_clicked_push_button(self) -> None:
+
         if self.library_path:
-            folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData(QtCore.Qt.UserRole))
-            new_vex_file_path, base_name = core.create_new_vex_file(folder_path)
+            if os.path.exists(self.library_path):
+                folder_path = os.path.join(
+                    self.library_path,
+                    self.wrangle_nodes_combo_box.currentData(QtCore.Qt.UserRole)
+                )
 
-            tree_widget_item = QtWidgets.QTreeWidgetItem()
-            tree_widget_item.setData(0, QtCore.Qt.UserRole, new_vex_file_path)
-            tree_widget_item.setSelected(True)
-            tree_widget_item.setText(0, base_name)
-            self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
-
+                self.current_item_path, base_name = core.create_new_vex_file(folder_path)
+            else:
+                logger.error(f'Library path {self.library_path!r} does not exist.')
         else:
-            logger.warning('Library path not set.')
+            logger.error('Library path not set.')
+
+        self._set_file_system_watcher()
+        self.select_current_item()
 
     def _delete_clicked_push_button(self) -> None:
         for item in self.file_explorer_tree_widget.selectedItems():
@@ -123,12 +140,42 @@ class FileExplorerWidget(QtWidgets.QWidget):
                 tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
                 self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
+    def select_current_item(self) -> None:
+        base_name = Path(self.current_item_path).stem
+        items = self.file_explorer_tree_widget.findItems(base_name, QtCore.Qt.MatchExactly, 0)
+
+        if items:
+            item = items[0]
+            item_data = item.data(0, QtCore.Qt.UserRole)
+
+            if os.path.normpath(item_data) == os.path.normpath(self.current_item_path):
+                self.file_explorer_tree_widget.setCurrentItem(item)
+
+    def _set_file_system_watcher(self) -> None:
+        file_system_watcher_directories = self.file_system_watcher.directories()
+
+        if file_system_watcher_directories:
+            self.file_system_watcher.removePaths(file_system_watcher_directories)
+
+        file_system_watcher_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
+
+        if os.path.exists(self.library_path):
+            self.file_system_watcher.addPath(self.library_path)
+
+        if os.path.exists(file_system_watcher_path):
+            self.file_system_watcher.addPath(file_system_watcher_path)
+
+            logger.debug(f'File system watcher set to {file_system_watcher_path!r}')
+
     def get_current_wrangle_node_type(self) -> str:
         return self.wrangle_nodes_combo_box.currentData()
 
-    def rename_current_item(self, name: str) -> None:
+    def rename_current_item(self, new_name: str) -> None:
         current_item = self.file_explorer_tree_widget.currentItem()
-        self.file_explorer_tree_widget.rename_item(column=0, item=current_item, new_name=name)
+        self.file_explorer_tree_widget.rename_item(column=0, item=current_item, new_name=new_name)
+
+    def set_current_path(self, file_path: str) -> None:
+        self.current_item_path = file_path
 
     def set_current_wrangle_node(self, wrangle_node_name: str, wrangle_node_type: str) -> None:
         self.wrangle_nodes_combo_box.setCurrentText(f'{wrangle_node_name} ({wrangle_node_type})')
@@ -136,4 +183,5 @@ class FileExplorerWidget(QtWidgets.QWidget):
     def set_library_path(self, library_path: str) -> None:
         self.library_path = library_path
 
+        self._set_file_system_watcher()
         self._create_tree_widget_items()
