@@ -18,14 +18,14 @@ def create_new_vex_file(folder_path: str) -> tuple[str, str]:
         logger.error(f'Library path {library_path!r} does not exist.')
         return '', ''
 
-    files = glob.glob(f'{folder_path}/*.vex')
+    files = glob.glob(f'{folder_path}/*.vfl')
     files.sort(reverse=True)
 
     value = 1
 
     for file in files:
         base_name = os.path.basename(file)
-        match = re.search(r'VEX(\d{2}).vex', base_name)
+        match = re.search(r'VEX(\d{2}).vfl', base_name)
 
         if match:
             current_value = int(match.group(1))
@@ -38,7 +38,7 @@ def create_new_vex_file(folder_path: str) -> tuple[str, str]:
 
         logger.info(f'{folder_path!r} folder created.')
 
-    new_vex_file_path = os.path.join(folder_path, f'VEX{value:02d}.vex')
+    new_vex_file_path = os.path.join(folder_path, f'VEX{value:02d}.vfl')
     base_name = Path(new_vex_file_path).stem
 
     if not os.path.exists(new_vex_file_path):
@@ -62,7 +62,7 @@ def get_vex_files(folder_path: str) -> list[tuple[str, str]]:
     vex_files = []
 
     if os.path.exists(folder_path):
-        for vex_file_path in glob.glob(os.path.join(folder_path, '*.vex')):
+        for vex_file_path in glob.glob(os.path.join(folder_path, '*.vfl')):
             base_name = Path(vex_file_path).stem
             vex_files.append((vex_file_path, base_name))
 
@@ -70,8 +70,8 @@ def get_vex_files(folder_path: str) -> list[tuple[str, str]]:
 
 
 def rename_vex_file(file_path: str, new_name: str) -> tuple[str, str]:
-    if not new_name.endswith('.vex'):
-        new_name = f'{new_name}.vex'
+    if not new_name.endswith('.vfl'):
+        new_name = f'{new_name}.vfl'
 
     if not utils.is_valid_file_name(new_name):
         new_file_path = file_path
