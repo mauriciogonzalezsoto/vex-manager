@@ -2,12 +2,16 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 import shiboken2
 
+import hou
+
 from pathlib import Path
 import logging
+import json
 import os
 
 from vex_manager.gui.file_explorer_tree_widget import FileExplorerTreeWidget
 from vex_manager.config import WrangleNodes
+import vex_manager.utils as utils
 import vex_manager.core as core
 
 
@@ -22,10 +26,15 @@ class FileExplorerWidget(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
+        self.preferences_path = utils.get_preferences_path()
+
+        self.display_dialog_when_deleting_a_file = True
+
         self.library_path = ''
         self.current_item_path = ''
 
         self.file_system_watcher = QtCore.QFileSystemWatcher()
+        self.number_of_files = -1
 
         self._create_widgets()
         self._create_layouts()
@@ -67,11 +76,24 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.new_push_button.clicked.connect(self._new_clicked_push_button)
         self.delete_push_button.clicked.connect(self._delete_clicked_push_button)
 
-    def _directory_changed_file_system_watcher(self) -> None:
-        self._create_tree_widget_items()
-        self.select_current_item()
+    def _load_preferences(self) -> None:
+        settings = {}
 
-        logger.debug('File system watcher updated files.')
+        if os.path.exists(self.preferences_path):
+            with open(self.preferences_path, 'r') as file_for_read:
+                settings = json.load(file_for_read)
+
+        self.display_dialog_when_deleting_a_file = settings.get('display_dialog_when_deleting_a_file', True)
+
+    def _directory_changed_file_system_watcher(self) -> None:
+        folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
+        vex_files = core.get_vex_files(folder_path)
+
+        if self.number_of_files != len(vex_files):
+            self._create_tree_widget_items()
+            self.select_current_item()
+
+            logger.debug('File system watcher updated files.')
 
     def _wrangle_nodes_current_text_changed_combo_box(self) -> None:
         self._set_file_system_watcher()
@@ -113,10 +135,30 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.select_current_item()
 
     def _delete_clicked_push_button(self) -> None:
-        for item in self.file_explorer_tree_widget.selectedItems():
-            file_path = item.data(0, QtCore.Qt.UserRole)
-            shiboken2.delete(item)
-            core.delete_file(file_path)
+        selected_items = self.file_explorer_tree_widget.selectedItems()
+
+        if selected_items:
+            self._load_preferences()
+
+            result = 0  # Result = 0 means that the user selected 'Yes'.
+
+            if self.display_dialog_when_deleting_a_file:
+                result = hou.ui.displayCustomConfirmation(
+                    'Delete selected VEX file?',
+                    buttons=('Yes', 'No'),
+                    close_choice=1,
+                    default_choice=0,
+                    suppress=hou.confirmType.NoConfirmType,
+                    title='Delete'
+                )
+
+            if not result:
+                item = selected_items[0]
+                file_path = item.data(0, QtCore.Qt.UserRole)
+                shiboken2.delete(item)
+                core.delete_file(file_path)
+        else:
+            logger.debug('No VEX file selected to delete.')
 
     def _create_combo_box_items(self) -> None:
         for wrangle_node in WrangleNodes:
@@ -133,12 +175,21 @@ class FileExplorerWidget(QtWidgets.QWidget):
             self.file_explorer_tree_widget.clear()
 
             folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
+            vex_files = core.get_vex_files(folder_path)
 
-            for file_path, base_name in core.get_vex_files(folder_path):
+            self.number_of_files = len(vex_files)
+
+            for file_path, base_name in vex_files:
                 tree_widget_item = QtWidgets.QTreeWidgetItem()
                 tree_widget_item.setText(0, base_name)
                 tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
                 self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
+
+    def clear_file_system_watcher(self) -> None:
+        file_system_watcher_directories = self.file_system_watcher.directories()
+
+        if file_system_watcher_directories:
+            self.file_system_watcher.removePaths(file_system_watcher_directories)
 
     def select_current_item(self) -> None:
         base_name = Path(self.current_item_path).stem
@@ -151,11 +202,10 @@ class FileExplorerWidget(QtWidgets.QWidget):
             if os.path.normpath(item_data) == os.path.normpath(self.current_item_path):
                 self.file_explorer_tree_widget.setCurrentItem(item)
 
-    def _set_file_system_watcher(self) -> None:
-        file_system_watcher_directories = self.file_system_watcher.directories()
+                logger.debug(f'{item.text(0)!r} item selected.')
 
-        if file_system_watcher_directories:
-            self.file_system_watcher.removePaths(file_system_watcher_directories)
+    def _set_file_system_watcher(self) -> None:
+        self.clear_file_system_watcher()
 
         file_system_watcher_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
 

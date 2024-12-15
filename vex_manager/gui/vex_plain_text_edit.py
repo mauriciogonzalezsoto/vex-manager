@@ -3,8 +3,11 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 
 import logging
+import json
+import os
 
 from vex_manager.config import VEXSyntaxis
+import vex_manager.utils as utils
 
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
@@ -15,6 +18,12 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
     def __init__(self) -> None:
         super().__init__()
 
+        self.preferences_path = utils.get_preferences_path()
+
+        self.auto_indent = True
+        self.insert_closing_brackets = True
+        self.insert_closing_quotes = True
+        self.backspace_on_tab_space = True
         self.tab_size = 4
 
         self.font = QtGui.QFont()
@@ -26,6 +35,8 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         self.setWordWrapMode(QtGui.QTextOption.NoWrap)
 
         VEXSyntaxHighlighter(self.document())
+
+        self.load_preferences()
 
     def _handle_cursor_behavior(self, char: str) -> bool:
         text_cursor = self.textCursor()
@@ -70,6 +81,19 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         text_cursor.movePosition(text_cursor.PreviousCharacter)
         self.setTextCursor(text_cursor)
 
+    def load_preferences(self) -> None:
+        settings = {}
+
+        if os.path.exists(self.preferences_path):
+            with open(self.preferences_path, 'r') as file_for_read:
+                settings = json.load(file_for_read)
+
+        self.auto_indent = settings.get('auto_indent', True)
+        self.insert_closing_brackets = settings.get('insert_closing_brackets', True)
+        self.insert_closing_quotes = settings.get('insert_closing_quotes', True)
+        self.backspace_on_tab_space = settings.get('backspace_on_tab_stop', True)
+        self.tab_size = settings.get('tab_size', 4)
+
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         key = event.key()
 
@@ -78,25 +102,32 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         text_cursor_block = text_cursor.block()
         current_line_text = text_cursor_block.text()
 
-        if key == QtCore.Qt.Key_Tab:
+        if text_cursor_selected_text:
+            super().keyPressEvent(event)
+
+            return
+
+        elif key == QtCore.Qt.Key_Tab:
             self.insertPlainText(''.ljust(self.tab_size))
 
+            return
+
         elif key == QtCore.Qt.Key_Backspace:
-            if not text_cursor_selected_text and current_line_text.strip() == '' and text_cursor.atBlockEnd():
-                delete_block = len(current_line_text) % self.tab_size
+            if self.backspace_on_tab_space:
+                if current_line_text.strip() == '' and current_line_text and text_cursor.atBlockEnd():
+                    delete_block = len(current_line_text) % self.tab_size
 
-                if delete_block == 0:
-                    delete_block = self.tab_size
+                    if delete_block == 0:
+                        delete_block = self.tab_size
 
-                for i in range(delete_block):
-                    super().keyPressEvent(event)
-            else:
-                super().keyPressEvent(event)
+                    for i in range(delete_block):
+                        super().keyPressEvent(event)
+
+                    return
 
         elif key == QtCore.Qt.Key_Return:
-            leading_spaces = len(current_line_text) - len(current_line_text.lstrip())
-
-            if not text_cursor_selected_text:
+            if self.auto_indent:
+                leading_spaces = len(current_line_text) - len(current_line_text.lstrip())
                 cursor_position = text_cursor.position() - 1
 
                 if cursor_position >= 0:
@@ -110,42 +141,71 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
                         self.setTextCursor(text_cursor)
 
                         leading_spaces += self.tab_size
+
                     else:
                         super().keyPressEvent(event)
-                else:
-                    super().keyPressEvent(event)
-            else:
-                super().keyPressEvent(event)
 
-            self.insertPlainText(''.ljust(leading_spaces))
+                    self.insertPlainText(''.ljust(leading_spaces))
+
+                    return
 
         elif key == QtCore.Qt.Key_BraceLeft:
-            self._insert_matching_delimiter('{')
+            if self.insert_closing_brackets:
+                self._insert_matching_delimiter('{')
+
+                return
+
         elif key == QtCore.Qt.Key_BraceRight:
-            if not self._handle_cursor_behavior('}'):
-                self.insertPlainText('}')
+            if self.insert_closing_brackets:
+
+                if self._handle_cursor_behavior('}'):
+                    return
 
         elif key == QtCore.Qt.Key_ParenLeft:
-            self._insert_matching_delimiter('(')
+            if self.insert_closing_brackets:
+                self._insert_matching_delimiter('(')
+
+                return
+
         elif key == QtCore.Qt.Key_ParenRight:
-            if not self._handle_cursor_behavior(')'):
-                self.insertPlainText(')')
+            if self.insert_closing_brackets:
+                if self._handle_cursor_behavior(')'):
+
+                    return
 
         elif key == QtCore.Qt.Key_BracketLeft:
-            self._insert_matching_delimiter('[')
+            if self.insert_closing_brackets:
+                self._insert_matching_delimiter('[')
+
+                return
+
         elif key == QtCore.Qt.Key_BracketRight:
-            if not self._handle_cursor_behavior(']'):
-                self.insertPlainText(']')
+            if self.insert_closing_brackets:
+                if self._handle_cursor_behavior(']'):
+
+                    return
 
         elif key == QtCore.Qt.Key_QuoteDbl:
-            if not self._handle_cursor_behavior('"'):
-                self._insert_matching_delimiter('"')
+            if self.insert_closing_quotes:
+                if self._handle_cursor_behavior('"'):
+
+                    return
+                else:
+                    self._insert_matching_delimiter('"')
+
+                    return
 
         elif key == QtCore.Qt.Key_Apostrophe:
-            if not self._handle_cursor_behavior('\''):
-                self._insert_matching_delimiter('\'')
-        else:
-            super().keyPressEvent(event)
+            if self.insert_closing_quotes:
+                if self._handle_cursor_behavior('\''):
+
+                    return
+                else:
+                    self._insert_matching_delimiter('\'')
+
+                    return
+
+        super().keyPressEvent(event)
 
 
 class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):

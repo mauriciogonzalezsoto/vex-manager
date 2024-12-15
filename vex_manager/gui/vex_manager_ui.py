@@ -11,6 +11,7 @@ import os
 
 from vex_manager.gui.file_explorer_widget import FileExplorerWidget
 from vex_manager.gui.vex_editor_widget import VEXEditorWidget
+from vex_manager.gui.preferences_ui import PreferencesUI
 from vex_manager.config import WrangleNodes
 import vex_manager.utils as utils
 import vex_manager.core as core
@@ -27,6 +28,7 @@ class VEXManagerUI(QtWidgets.QWidget):
         super().__init__()
 
         self.settings_path = utils.get_settings_path()
+        self.preferences_ui = PreferencesUI(self)
 
         self.current_vex_file_path = ''
 
@@ -44,6 +46,8 @@ class VEXManagerUI(QtWidgets.QWidget):
 
         edit_menu = self.menu_bar.addMenu('Edit')
         edit_menu.addAction('Save Settings', self._save_settings)
+        edit_menu.addSeparator()
+        edit_menu.addAction('Preferences', self._open_preferences)
 
         help_menu = self.menu_bar.addMenu('Help')
         help_menu.addAction('Help on VEX Manager', self._open_help)
@@ -128,6 +132,9 @@ class VEXManagerUI(QtWidgets.QWidget):
         else:
             logger.error(f'Settings path is empty.')
 
+    def _open_preferences(self) -> None:
+        self.preferences_ui.show()
+
     @staticmethod
     def _open_help() -> None:
         webbrowser.open('https://github.com/mauriciogonzalezsoto/vex-manager')
@@ -176,7 +183,6 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _vex_editor_saved_clicked_widget(self) -> None:
         self.file_explorer_widget.set_current_path(self.vex_editor_widget.get_current_file_path())
-        self.file_explorer_widget.select_current_item()
 
     def _vex_editor_create_wrangle_node_clicked_widget(self) -> None:
         current_wrangle_node_type = self.file_explorer_widget.get_current_wrangle_node_type()
@@ -193,6 +199,11 @@ class VEXManagerUI(QtWidgets.QWidget):
             core.insert_vex_code(node=selected_nodes[-1], vex_code=self.vex_editor_widget.get_vex_code())
         else:
             logger.warning('There is no node selected.')
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        super().closeEvent(event)
+
+        self.file_explorer_widget.clear_file_system_watcher()
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
