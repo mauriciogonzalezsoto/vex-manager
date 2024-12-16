@@ -13,7 +13,7 @@ import vex_manager.core as core
 logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
-class VEXEditorWidget(QtWidgets.QDialog):
+class VEXEditorWidget(QtWidgets.QWidget):
     name_editing_finished = QtCore.Signal(str)
     save_clicked = QtCore.Signal()
     create_wrangle_node_clicked = QtCore.Signal()
@@ -34,7 +34,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
     def _create_widgets(self) -> None:
         self.name_line_edit = QtWidgets.QLineEdit()
 
-        self.vex_code_plain_text_edit = VEXPlainTextEdit()
+        self.vex_plain_text_editor = VEXPlainTextEdit()
 
         self.save_changed_push_button = QtWidgets.QPushButton('Save Changes')
 
@@ -45,7 +45,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(self.name_line_edit)
-        main_layout.addWidget(self.vex_code_plain_text_edit)
+        main_layout.addWidget(self.vex_plain_text_editor)
         main_layout.addWidget(self.save_changed_push_button)
         main_layout.setContentsMargins(QtCore.QMargins())
         main_layout.setSpacing(3)
@@ -91,7 +91,7 @@ class VEXEditorWidget(QtWidgets.QDialog):
 
     def _save_file(self) -> None:
         with open(self.file_path, 'w') as file_to_write:
-            content = self.vex_code_plain_text_edit.toPlainText()
+            content = self.vex_plain_text_editor.toPlainText()
             file_to_write.write(content)
 
         self.name_line_edit.setText(self.base_name)
@@ -101,15 +101,15 @@ class VEXEditorWidget(QtWidgets.QDialog):
     def display_code(self) -> None:
         if os.path.exists(self.file_path):
             with open(self.file_path) as file_for_read:
-                self.vex_code_plain_text_edit.setPlainText(file_for_read.read())
+                self.vex_plain_text_editor.setPlainText(file_for_read.read())
         else:
-            self.vex_code_plain_text_edit.setPlainText('')
+            self.vex_plain_text_editor.setPlainText('')
 
     def get_current_file_path(self) -> str:
         return self.file_path
 
     def get_vex_code(self) -> str:
-        return self.vex_code_plain_text_edit.toPlainText()
+        return self.vex_plain_text_editor.toPlainText()
 
     def set_file_path(self, file_path: str) -> None:
         self.file_path = file_path

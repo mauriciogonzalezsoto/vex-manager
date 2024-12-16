@@ -106,7 +106,8 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         for i in range(self.file_explorer_tree_widget.topLevelItemCount()):
             item = self.file_explorer_tree_widget.topLevelItem(i)
-            item.setHidden(text in item.text(0))
+            item_text = item.text(0)
+            item.setHidden(text not in item_text.lower())
 
     def _file_explorer_current_item_changed_tree_widget(self, current: QtWidgets.QTreeWidgetItem) -> None:
         data = current.data(0, QtCore.Qt.UserRole) if current else ''
