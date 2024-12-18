@@ -34,6 +34,8 @@ class VEXManagerUI(QtWidgets.QWidget):
 
         self.resize(800, 600)
         self.setObjectName(VEXManagerUI.WINDOW_NAME)
+        self.setParent(hou.qt.mainWindow(), QtCore.Qt.Dialog)
+        self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint)
         self.setWindowTitle(VEXManagerUI.WINDOW_TITLE)
 
         self._create_widgets()

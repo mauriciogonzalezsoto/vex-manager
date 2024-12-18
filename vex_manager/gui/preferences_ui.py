@@ -25,9 +25,10 @@ class PreferencesUI(QtWidgets.QDialog):
         self.preferences_path = utils.get_preferences_path()
 
         self.resize(400, 200)
+        self.setModal(True)
         self.setObjectName(PreferencesUI.WINDOW_NAME)
         self.setWindowTitle(PreferencesUI.WINDOW_TITLE)
-        self.setModal(True)
+        self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint)
 
         self._create_widgets()
         self._create_layouts()
@@ -65,10 +66,15 @@ class PreferencesUI(QtWidgets.QDialog):
 
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(self.preferences_categories_combo_box)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
-        main_layout.setContentsMargins(QtCore.QMargins(6, 3, 6, 6))
-        main_layout.setSpacing(3)
+        main_layout.setContentsMargins(QtCore.QMargins(6, 6, 6, 6))
+        main_layout.setSpacing(6)
+
+        preferences_categories_h_box_layout = QtWidgets.QHBoxLayout()
+        preferences_categories_h_box_layout.addWidget(self.preferences_categories_combo_box)
+        preferences_categories_h_box_layout.addStretch()
+        preferences_categories_h_box_layout.setContentsMargins(QtCore.QMargins(3, 3, 3, 3))
+        main_layout.addLayout(preferences_categories_h_box_layout)
 
         self.general_group_box = QtWidgets.QGroupBox()
         main_layout.addWidget(self.general_group_box)
