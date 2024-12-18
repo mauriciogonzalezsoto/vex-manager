@@ -11,40 +11,48 @@ import vex_manager.utils as utils
 logger = logging.getLogger(f'vex_manager.{__name__}')
 
 
-def create_new_vex_file(folder_path: str) -> tuple[str, str]:
+def create_new_vex_file(folder_path: str, name: str = '') -> tuple[str, str]:
     library_path = os.path.dirname(folder_path)
+    file_extension = '.vfl'
 
     if not os.path.exists(library_path):
         logger.error(f'Library path {library_path!r} does not exist.')
         return '', ''
+    elif not name:
+        name = 'VEX'
 
-    files = glob.glob(f'{folder_path}/*.vfl')
-    files.sort(reverse=True)
+    vex_file_path = os.path.join(folder_path, f'{name}{file_extension}')
 
-    value = 1
+    if os.path.exists(vex_file_path):
+        files = glob.glob(f'{folder_path}/*{file_extension}')
+        files.sort(reverse=True)
 
-    for file in files:
-        base_name = os.path.basename(file)
-        match = re.search(r'VEX(\d{2}).vfl', base_name)
+        value = 1
 
-        if match:
-            current_value = int(match.group(1))
+        for file in files:
+            base_name = os.path.basename(file)
+            match = re.search(r'%s(\d{2})%s' % (name, file_extension), base_name)
 
-            if value <= current_value:
-                value = current_value + 1
+            if match:
+                current_value = int(match.group(1))
 
-    if not os.path.exists(folder_path):
-        os.mkdir(folder_path)
+                if value <= current_value:
+                    value = current_value + 1
 
-        logger.info(f'{folder_path!r} folder created.')
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
 
-    new_vex_file_path = os.path.join(folder_path, f'VEX{value:02d}.vfl')
-    base_name = Path(new_vex_file_path).stem
+            logger.info(f'{folder_path!r} folder created.')
 
-    if not os.path.exists(new_vex_file_path):
-        open(new_vex_file_path, 'w').close()
+        new_vex_file_path = os.path.join(folder_path, f'{name}{value:02d}{file_extension}')
+        base_name = Path(new_vex_file_path).stem
+    else:
+        new_vex_file_path = vex_file_path
+        base_name = name
 
-        logger.debug(f'{new_vex_file_path!r} created.')
+    open(new_vex_file_path, 'w').close()
+
+    logger.debug(f'{new_vex_file_path!r} created.')
 
     return new_vex_file_path, base_name
 

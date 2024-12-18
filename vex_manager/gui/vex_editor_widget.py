@@ -65,7 +65,8 @@ class VEXEditorWidget(QtWidgets.QWidget):
         name = self.name_line_edit.text()
 
         if utils.is_valid_file_name(name):
-            self.name_editing_finished.emit(name)
+            if os.path.exists(self.library_path):
+                self.name_editing_finished.emit(name)
         else:
             logger.error(f'Invalid file name {name!r}')
 
@@ -75,7 +76,12 @@ class VEXEditorWidget(QtWidgets.QWidget):
         else:
             if os.path.exists(self.library_path):
                 folder_path = os.path.join(self.library_path, self.wrangle_node_type)
-                self.file_path, self.base_name = core.create_new_vex_file(folder_path)
+                name = self.name_line_edit.text()
+
+                if not utils.is_valid_file_name(name):
+                    name = ''
+
+                self.file_path, self.base_name = core.create_new_vex_file(folder_path=folder_path, name=name)
 
                 self._save_file()
 

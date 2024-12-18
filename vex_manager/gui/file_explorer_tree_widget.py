@@ -37,14 +37,15 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
         return top_level_items
 
     def rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, new_name: str) -> None:
-        file_path = item.data(0, QtCore.Qt.UserRole)
-        new_file_path, new_base_name = core.rename_vex_file(file_path, new_name)
+        if item:
+            file_path = item.data(0, QtCore.Qt.UserRole)
+            new_file_path, new_base_name = core.rename_vex_file(file_path, new_name)
 
-        if file_path != new_file_path:
-            item.setText(column, new_base_name)
-            item.setData(column, QtCore.Qt.UserRole, new_file_path)
+            if file_path != new_file_path:
+                item.setText(column, new_base_name)
+                item.setData(column, QtCore.Qt.UserRole, new_file_path)
 
-            self.item_renamed.emit(new_file_path)
+                self.item_renamed.emit(new_file_path)
 
     def editItem(self, item: QtWidgets.QTreeWidgetItem, column: int) -> None:
         line_edit = QtWidgets.QLineEdit(self)
