@@ -27,9 +27,10 @@ class VEXManagerUI(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
-        self.settings_path = utils.get_settings_path()
-        self.preferences_ui = PreferencesUI(self)
+        self.preferences_path = utils.get_preferences_path()
+        self.preferences_ui = PreferencesUI(self, QtCore.Qt.Dialog)
 
+        self.library_path = ''
         self.current_vex_file_path = ''
 
         self.resize(800, 600)
@@ -41,26 +42,17 @@ class VEXManagerUI(QtWidgets.QWidget):
         self._create_widgets()
         self._create_layouts()
         self._create_connections()
-        self._load_settings()
+        self._load_preferences()
+        self._update()
 
     def _create_widgets(self) -> None:
         self.menu_bar = QtWidgets.QMenuBar()
 
         edit_menu = self.menu_bar.addMenu('Edit')
-        edit_menu.addAction('Save Settings', self._save_settings)
-        edit_menu.addSeparator()
         edit_menu.addAction('Preferences', self._open_preferences)
 
         help_menu = self.menu_bar.addMenu('Help')
         help_menu.addAction('Help on VEX Manager', self._open_help)
-
-        self.library_path_line_edit = QtWidgets.QLineEdit()
-        self.library_path_line_edit.setPlaceholderText('Library path...')
-
-        push_button_size = self.library_path_line_edit.sizeHint().height()
-
-        self.select_library_path_push_button = QtWidgets.QPushButton('...')
-        self.select_library_path_push_button.setFixedSize(QtCore.QSize(push_button_size, push_button_size))
 
         self.file_explorer_widget = FileExplorerWidget()
 
@@ -71,11 +63,6 @@ class VEXManagerUI(QtWidgets.QWidget):
         main_layout.setContentsMargins(QtCore.QMargins(6, 3, 6, 6))
         main_layout.setMenuBar(self.menu_bar)
         main_layout.setSpacing(3)
-
-        library_path_h_box_layout = QtWidgets.QHBoxLayout()
-        library_path_h_box_layout.addWidget(self.library_path_line_edit)
-        library_path_h_box_layout.addWidget(self.select_library_path_push_button)
-        main_layout.addLayout(library_path_h_box_layout)
 
         splitter = QtWidgets.QSplitter()
         main_layout.addWidget(splitter)
@@ -96,13 +83,12 @@ class VEXManagerUI(QtWidgets.QWidget):
         right_layout.setContentsMargins(QtCore.QMargins())
         right_widget.setLayout(right_layout)
 
-        splitter.setCollapsible(0, False)
+        splitter.setCollapsible(0, True)
         splitter.setCollapsible(1, False)
         splitter.setStretchFactor(1, 1)
 
     def _create_connections(self) -> None:
-        self.library_path_line_edit.editingFinished.connect(self._library_path_editing_finished_line_edit)
-        self.select_library_path_push_button.clicked.connect(self._select_library_path_clicked_push_button)
+        self.preferences_ui.on_save_clicked.connect(self._on_save_clicked_preferences_ui)
 
         self.file_explorer_widget.current_wrangle_node_text_changed.connect(
             self._file_explorer_current_wrangle_node_text_changed)
@@ -114,25 +100,14 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
         self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
 
-    def _load_settings(self) -> None:
-        settings = {}
+    def _load_preferences(self) -> None:
+        preferences = {}
 
-        if os.path.exists(self.settings_path):
-            with open(self.settings_path, 'r') as file_for_read:
-                settings = json.load(file_for_read)
+        if os.path.exists(self.preferences_path):
+            with open(self.preferences_path, 'r') as file_for_read:
+                preferences = json.load(file_for_read)
 
-        self.library_path_line_edit.setText(settings.get('library_path', ''))
-
-        self._library_path_editing_finished_line_edit()
-
-    def _save_settings(self) -> None:
-        settings = {'library_path': self.library_path_line_edit.text()}
-
-        if self.settings_path:
-            with open(self.settings_path, 'w') as file_for_write:
-                json.dump(settings, file_for_write, indent=4)
-        else:
-            logger.error(f'Settings path is empty.')
+        self.library_path = preferences.get('library_path', '')
 
     def _open_preferences(self) -> None:
         self.preferences_ui.show()
@@ -141,30 +116,9 @@ class VEXManagerUI(QtWidgets.QWidget):
     def _open_help() -> None:
         webbrowser.open('https://github.com/mauriciogonzalezsoto/vex-manager')
 
-    def _library_path_editing_finished_line_edit(self) -> None:
-        library_path = self.library_path_line_edit.text()
-        library_path = hou.text.expandString(library_path)
-
-        if library_path:
-            if not os.path.exists(library_path):
-                logger.error(f'Library path {library_path!r} does not exist.')
-
-            self.file_explorer_widget.set_library_path(library_path)
-
-            self.vex_editor_widget.set_library_path(library_path)
-            self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
-
-    def _select_library_path_clicked_push_button(self) -> None:
-        library_path = hou.ui.selectFile(file_type=hou.fileType.Directory, title='Select Folder')
-        library_path = hou.text.expandString(library_path)
-
-        if library_path:
-            self.library_path_line_edit.setText(library_path)
-
-            self.file_explorer_widget.set_library_path(library_path)
-
-            self.vex_editor_widget.set_library_path(library_path)
-            self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
+    def _on_save_clicked_preferences_ui(self) -> None:
+        self._load_preferences()
+        self._update()
 
     def _file_explorer_current_wrangle_node_text_changed(self) -> None:
         self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
@@ -201,6 +155,12 @@ class VEXManagerUI(QtWidgets.QWidget):
             core.insert_vex_code(node=selected_nodes[-1], vex_code=self.vex_editor_widget.get_vex_code())
         else:
             logger.warning('There is no node selected.')
+
+    def _update(self) -> None:
+        self.file_explorer_widget.set_library_path(self.library_path)
+
+        self.vex_editor_widget.set_library_path(self.library_path)
+        self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         super().closeEvent(event)

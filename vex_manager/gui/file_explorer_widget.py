@@ -28,7 +28,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         self.preferences_path = utils.get_preferences_path()
 
-        self.display_dialog_when_deleting_a_file = True
+        self.warm_before_deleting_a_file = True
 
         self.library_path = ''
         self.current_item_path = ''
@@ -83,7 +83,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
             with open(self.preferences_path, 'r') as file_for_read:
                 settings = json.load(file_for_read)
 
-        self.display_dialog_when_deleting_a_file = settings.get('display_dialog_when_deleting_a_file', True)
+        self.warm_before_deleting_a_file = settings.get('warm_before_deleting_a_file', True)
 
     def _directory_changed_file_system_watcher(self) -> None:
         folder_path = os.path.join(self.library_path, self.wrangle_nodes_combo_box.currentData())
@@ -143,7 +143,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
             result = 0  # Result = 0 means that the user selected 'Yes'.
 
-            if self.display_dialog_when_deleting_a_file:
+            if self.warm_before_deleting_a_file:
                 result = hou.ui.displayCustomConfirmation(
                     'Delete selected VEX file?',
                     buttons=('Yes', 'No'),

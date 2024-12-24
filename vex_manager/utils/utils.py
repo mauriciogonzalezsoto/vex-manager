@@ -20,14 +20,3 @@ def get_preferences_path() -> str:
     preferences_path = os.path.join(houdini_folder_path, 'vexmanagerpreferences.json')
 
     return preferences_path
-
-
-def get_settings_path() -> str:
-    home_path = os.path.expandvars('$HOME')
-    houdini_version = hou.applicationVersionString()
-    major, minor, patch = houdini_version.split('.')
-    houdini_folder_path = os.path.join(home_path, f'houdini{major}.{minor}')
-
-    settings_path = os.path.join(houdini_folder_path, 'vexmanagersettings.json')
-
-    return settings_path
