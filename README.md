@@ -1,7 +1,7 @@
 # vex-manager
 VEX Manager is a tool for Houdini that saves, manages, and imports VEX code presets across projects.
 
-![Texture Connector](.github/vex_manager_ui.png)
+![VEX Manager](.github/vex_manager_ui.png)
 
 ## Table of Contents
 - [Installation](#installation)
@@ -25,15 +25,10 @@ VEX Manager is a tool for Houdini that saves, manages, and imports VEX code pres
 1. In the Houdini interface, go to the **Shelf** area
 2. **Right-click** on an empty space in the Shelf and select **New Tool...**
 3. In the **Edit tool** window, in the **Script** section, copy the following Python code
-    ```python 
-   from PySide2 import QtCore
-
-   import hou
-   
+    ```python  
    from vex_manager import VEXManagerUI
    
    vex_manager_ui = VEXManagerUI()
-   vex_manager_ui.setParent(hou.qt.mainWindow(), QtCore.Qt.Tool)
    vex_manager_ui.show()
     ```
 4. Click **Accept** to save the new button on the Shelf
