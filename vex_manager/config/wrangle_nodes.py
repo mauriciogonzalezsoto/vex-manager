@@ -2,14 +2,14 @@ from enum import Enum
 
 
 class WrangleNodes(Enum):
-    ATTRIB_WRANGLE = ('Attrib Wrangle', 'attribwrangle')
-    DEFORMATION_WRANGLE = ('Deformation Wrangle', 'deformationwrangle')
-    RIG_ATTRIB_WRANGLE = ('Rig Attrib Wrangle', 'rigattribwrangle')
-    VOLUME_WRANGLE = ('Volume Wrangle', 'volumewrangle')
+    ATTRIB_WRANGLE = 'attribwrangle'
+    DEFORMATION_WRANGLE = 'deformationwrangle'
+    RIG_ATTRIB_WRANGLE = 'rigattribwrangle'
+    VOLUME_WRANGLE = 'volumewrangle'
 
-    GEOMETRY_WRANGLE = ('Geometry Wrangle', 'geometrywrangle')
-    POP_WRANGLE = ('POP Wrangle', 'popwrangle')
+    GEOMETRY_WRANGLE = 'geometrywrangle'
+    POP_WRANGLE = 'popwrangle'
 
-    WRANGLE = ('Wrangle', 'wrangle')
+    WRANGLE = 'wrangle'
 
-    CHANNEL_WRANGLE = ('Channel Wrangle', 'channelwrangle')
+    CHANNEL_WRANGLE = 'channelwrangle'

@@ -14,7 +14,7 @@ def set_vex_code_in_selected_wrangle_node(vex_code: str, insert: bool = False) -
 
         if selected_nodes:
             node = selected_nodes[-1]
-            wrangle_node_types = [node.value[1] for node in WrangleNodes]
+            wrangle_node_types = [node.value for node in WrangleNodes]
 
             if node.type().name() in wrangle_node_types:
                 if vex_code:

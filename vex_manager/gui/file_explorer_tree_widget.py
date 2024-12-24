@@ -28,14 +28,6 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
         self.rename_item(column=column, item=item, new_name=new_name)
         self.removeItemWidget(item, column)
 
-    def get_top_level_items(self) -> list[QtWidgets.QTreeWidgetItem]:
-        top_level_items = []
-
-        for i in range(self.topLevelItemCount()):
-            top_level_items.append(self.topLevelItem(i))
-
-        return top_level_items
-
     def rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, new_name: str) -> None:
         if item:
             file_path = item.data(0, QtCore.Qt.UserRole)

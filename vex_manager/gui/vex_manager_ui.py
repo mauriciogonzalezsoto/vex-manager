@@ -12,7 +12,6 @@ import os
 from vex_manager.gui.file_explorer_widget import FileExplorerWidget
 from vex_manager.gui.vex_editor_widget import VEXEditorWidget
 from vex_manager.gui.preferences_ui import PreferencesUI
-from vex_manager.config import WrangleNodes
 import vex_manager.utils as utils
 
 
@@ -89,10 +88,8 @@ class VEXManagerUI(QtWidgets.QWidget):
     def _create_connections(self) -> None:
         self.preferences_ui.on_save_clicked.connect(self._on_save_clicked_preferences_ui)
 
-        self.file_explorer_widget.current_wrangle_node_text_changed.connect(
-            self._file_explorer_current_wrangle_node_text_changed)
-        self.file_explorer_widget.current_item_changed.connect(self._context_explorer_current_item_changed_widget)
-        self.file_explorer_widget.current_item_renamed.connect(self._context_explorer_current_item_renamed_widget)
+        self.file_explorer_widget.current_item_changed.connect(self._file_explorer_current_item_changed_widget)
+        self.file_explorer_widget.current_item_renamed.connect(self._file_explorer_current_item_renamed_widget)
 
         self.vex_editor_widget.name_editing_finished.connect(self._vex_editor_name_editing_finished_widget)
         self.vex_editor_widget.save_clicked.connect(self._vex_editor_saved_clicked_widget)
@@ -117,17 +114,12 @@ class VEXManagerUI(QtWidgets.QWidget):
         self._load_preferences()
         self._update()
 
-    def _file_explorer_current_wrangle_node_text_changed(self) -> None:
-        self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
-        self.vex_editor_widget.set_file_path(self.current_vex_file_path)
-        self.vex_editor_widget.display_code()
-
-    def _context_explorer_current_item_changed_widget(self, file_path: str) -> None:
+    def _file_explorer_current_item_changed_widget(self, file_path: str) -> None:
         self.current_vex_file_path = file_path
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
         self.vex_editor_widget.display_code()
 
-    def _context_explorer_current_item_renamed_widget(self, file_path: str) -> None:
+    def _file_explorer_current_item_renamed_widget(self, file_path: str) -> None:
         self.current_vex_file_path = file_path
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
 
@@ -139,28 +131,9 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _update(self) -> None:
         self.file_explorer_widget.set_library_path(self.library_path)
-
         self.vex_editor_widget.set_library_path(self.library_path)
-        self.vex_editor_widget.set_wrangle_node_type(self.file_explorer_widget.get_current_wrangle_node_type())
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         super().closeEvent(event)
 
         self.file_explorer_widget.clear_file_system_watcher()
-
-    def showEvent(self, event: QtGui.QShowEvent) -> None:
-        super().showEvent(event)
-
-        selected_nodes = hou.selectedNodes()
-
-        if selected_nodes:
-            selected_node = selected_nodes[-1]
-
-            for wrangle_node in WrangleNodes:
-                wrangle_node_name, wrangle_node_type = wrangle_node.value
-                if selected_node.type().name() == wrangle_node_type:
-                    self.file_explorer_widget.set_current_wrangle_node(
-                        wrangle_node_name=wrangle_node_name,
-                        wrangle_node_type=wrangle_node_type)
-
-                    break

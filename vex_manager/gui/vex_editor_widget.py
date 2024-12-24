@@ -23,7 +23,6 @@ class VEXEditorWidget(QtWidgets.QWidget):
         self.file_path = ''
         self.base_name = ''
         self.library_path = ''
-        self.wrangle_node_type = ''
 
         self._create_widgets()
         self._create_layouts()
@@ -34,7 +33,7 @@ class VEXEditorWidget(QtWidgets.QWidget):
 
         self.vex_plain_text_editor = VEXPlainTextEdit()
 
-        self.save_changed_push_button = QtWidgets.QPushButton('Save Changes')
+        self.save_changes_push_button = QtWidgets.QPushButton('Save Changes')
 
         self.replace_code_push_button = QtWidgets.QPushButton('Replace Code')
 
@@ -44,7 +43,7 @@ class VEXEditorWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(self.name_line_edit)
         main_layout.addWidget(self.vex_plain_text_editor)
-        main_layout.addWidget(self.save_changed_push_button)
+        main_layout.addWidget(self.save_changes_push_button)
         main_layout.setContentsMargins(QtCore.QMargins())
         main_layout.setSpacing(3)
 
@@ -55,7 +54,7 @@ class VEXEditorWidget(QtWidgets.QWidget):
 
     def _create_connections(self) -> None:
         self.name_line_edit.editingFinished.connect(self._name_editing_finished_line_edit)
-        self.save_changed_push_button.clicked.connect(self._save_changed_clicked_push_button)
+        self.save_changes_push_button.clicked.connect(self._save_changes_clicked_push_button)
         self.replace_code_push_button.clicked.connect(self._replace_code_clicked_push_button)
         self.insert_code_push_button.clicked.connect(self._insert_code_clicked_push_button)
 
@@ -68,24 +67,22 @@ class VEXEditorWidget(QtWidgets.QWidget):
         else:
             logger.error(f'Invalid file name {name!r}')
 
-    def _save_changed_clicked_push_button(self) -> None:
+    def _save_changes_clicked_push_button(self) -> None:
         if self.file_path:
             self._save_file()
         else:
-            if os.path.exists(self.library_path):
-                folder_path = os.path.join(self.library_path, self.wrangle_node_type)
-                name = self.name_line_edit.text()
+            name = self.name_line_edit.text()
 
-                if not utils.is_valid_file_name(name):
-                    name = ''
+            if not utils.is_valid_file_name(name):
+                name = ''
 
-                self.file_path, self.base_name = core.create_new_vex_file(folder_path=folder_path, name=name)
+            self.file_path, self.base_name = core.create_new_vex_file(library_path=self.library_path, name=name)
+
+            if self.file_path:
 
                 self._save_file()
 
                 self.save_clicked.emit()
-            else:
-                logger.error(f'Library path {self.library_path} does not exist')
 
     def _replace_code_clicked_push_button(self) -> None:
         core.set_vex_code_in_selected_wrangle_node(vex_code=self.vex_plain_text_editor.toPlainText())
@@ -123,6 +120,3 @@ class VEXEditorWidget(QtWidgets.QWidget):
 
     def set_library_path(self, library_path: str) -> None:
         self.library_path = library_path
-
-    def set_wrangle_node_type(self, wrangle_node_type: str) -> None:
-        self.wrangle_node_type = wrangle_node_type
