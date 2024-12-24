@@ -17,21 +17,30 @@ def set_vex_code_in_selected_wrangle_node(vex_code: str, insert: bool = False) -
             wrangle_node_types = [node.value for node in WrangleNodes]
 
             if node.type().name() in wrangle_node_types:
-                if vex_code:
+                parms = [parm.name() for parm in node.parms()]
+
+                if 'snippet' in parms:
                     snippet_parm = node.parm('snippet')
+                elif 'vexsnippet' in parms:
+                    snippet_parm = node.parm('vexsnippet')
+                else:
+                    logger.error('No snippet parm found.')
 
-                    if insert:
-                        current_code = snippet_parm.evalAsString()
+                    return
 
-                        if current_code:
-                            new_vex_code = f'{current_code}\n\n{vex_code}'
-                        else:
-                            new_vex_code = vex_code
+                if insert:
+                    current_code = snippet_parm.evalAsString()
+
+                    if current_code:
+                        new_vex_code = f'{current_code}\n\n{vex_code}'
                     else:
                         new_vex_code = vex_code
+                else:
+                    new_vex_code = vex_code
 
-                    snippet_parm.set(new_vex_code)
+                snippet_parm.set(new_vex_code)
             else:
                 logger.error(f'{node.name()!r} is not a wrangle node.')
+                logger.error(node.type().name())
         else:
             logger.error('There is no selected node.')

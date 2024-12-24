@@ -4,7 +4,7 @@ from enum import Enum
 class WrangleNodes(Enum):
     ATTRIB_WRANGLE = 'attribwrangle'
     DEFORMATION_WRANGLE = 'deformationwrangle'
-    RIG_ATTRIB_WRANGLE = 'rigattribwrangle'
+    RIG_ATTRIB_WRANGLE = 'kinefx::rigattribwrangle'
     VOLUME_WRANGLE = 'volumewrangle'
 
     GEOMETRY_WRANGLE = 'geometrywrangle'
