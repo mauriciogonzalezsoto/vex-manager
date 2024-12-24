@@ -14,7 +14,6 @@ from vex_manager.gui.vex_editor_widget import VEXEditorWidget
 from vex_manager.gui.preferences_ui import PreferencesUI
 from vex_manager.config import WrangleNodes
 import vex_manager.utils as utils
-import vex_manager.core as core
 
 
 logger = logging.getLogger(f'vex_manager.{__name__}')
@@ -97,8 +96,6 @@ class VEXManagerUI(QtWidgets.QWidget):
 
         self.vex_editor_widget.name_editing_finished.connect(self._vex_editor_name_editing_finished_widget)
         self.vex_editor_widget.save_clicked.connect(self._vex_editor_saved_clicked_widget)
-        self.vex_editor_widget.create_wrangle_node_clicked.connect(self._vex_editor_create_wrangle_node_clicked_widget)
-        self.vex_editor_widget.insert_code_clicked.connect(self._vex_editor_insert_code_clicked_widget)
 
     def _load_preferences(self) -> None:
         preferences = {}
@@ -139,22 +136,6 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _vex_editor_saved_clicked_widget(self) -> None:
         self.file_explorer_widget.set_current_path(self.vex_editor_widget.get_current_file_path())
-
-    def _vex_editor_create_wrangle_node_clicked_widget(self) -> None:
-        current_wrangle_node_type = self.file_explorer_widget.get_current_wrangle_node_type()
-
-        wrangle_node = core.create_wrangle_node(wrangle_type=current_wrangle_node_type)
-
-        if wrangle_node:
-            core.insert_vex_code(node=wrangle_node, vex_code=self.vex_editor_widget.get_vex_code())
-
-    def _vex_editor_insert_code_clicked_widget(self) -> None:
-        selected_nodes = hou.selectedNodes()
-
-        if selected_nodes:
-            core.insert_vex_code(node=selected_nodes[-1], vex_code=self.vex_editor_widget.get_vex_code())
-        else:
-            logger.warning('There is no node selected.')
 
     def _update(self) -> None:
         self.file_explorer_widget.set_library_path(self.library_path)
