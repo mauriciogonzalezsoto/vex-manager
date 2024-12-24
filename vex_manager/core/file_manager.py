@@ -39,16 +39,16 @@ def create_new_vex_file(folder_path: str, name: str = '') -> tuple[str, str]:
                 if value <= current_value:
                     value = current_value + 1
 
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
-
-            logger.info(f'{folder_path!r} folder created.')
-
         new_vex_file_path = os.path.join(folder_path, f'{name}{value:02d}{file_extension}')
         base_name = Path(new_vex_file_path).stem
     else:
         new_vex_file_path = vex_file_path
         base_name = name
+
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
+
+        logger.info(f'{folder_path!r} folder created.')
 
     open(new_vex_file_path, 'w').close()
 
