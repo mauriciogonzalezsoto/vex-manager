@@ -29,6 +29,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         self.font = QtGui.QFont()
         self.font.setBold(True)
         self.font.setWordSpacing(5)
+        self.font.setPointSize(8)
 
         self.setFont(self.font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
@@ -96,6 +97,28 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         key = event.key()
+        modifiers = event.modifiers()
+
+        ctrl = modifiers & QtCore.Qt.ControlModifier != 0
+
+        if key == QtCore.Qt.Key_Plus:
+            if ctrl:
+                point_size = self.font.pointSize()
+
+                if point_size < 20:
+                    self.font.setPointSize(point_size + 1)
+                    self.setFont(self.font)
+
+                return
+        elif key == QtCore.Qt.Key_Minus:
+            if ctrl:
+                point_size = self.font.pointSize()
+
+                if point_size > 6:
+                    self.font.setPointSize(point_size - 1)
+                    self.setFont(self.font)
+
+                return
 
         text_cursor = self.textCursor()
         text_cursor_selected_text = text_cursor.selectedText()
@@ -125,7 +148,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
                     return
 
-        elif key == QtCore.Qt.Key_Return:
+        elif key == QtCore.Qt.Key_Return or key == QtCore.Qt.Key_Enter:
             if self.auto_indent:
                 leading_spaces = len(current_line_text) - len(current_line_text.lstrip())
                 cursor_position = text_cursor.position() - 1
