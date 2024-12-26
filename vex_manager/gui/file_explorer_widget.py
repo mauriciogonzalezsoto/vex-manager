@@ -84,14 +84,42 @@ class FileExplorerWidget(QtWidgets.QWidget):
         if self.number_of_files != len(vex_files):
             self._create_tree_widget_items()
             self.select_current_item()
+        else:
+            item_paths = []
+            item_path_renamed = ''
+            file_path_renamed = ''
 
-            logger.debug('File system watcher updated files.')
+            items = self.file_explorer_tree_widget.get_top_level_items()
+
+            for item in items:
+                data = item.data(0, QtCore.Qt.UserRole)
+                item_paths.append(data)
+
+            for item_path in item_paths:
+                if item_path not in vex_files:
+                    item_path_renamed = item_path
+
+            for file_path in vex_files:
+                if file_path not in item_paths:
+                    file_path_renamed = file_path
+
+            item = self.file_explorer_tree_widget.find_item_by_path(item_path_renamed)
+
+            if item:
+                base_name = Path(file_path_renamed).stem
+
+                item.setText(0, base_name)
+                item.setData(0, QtCore.Qt.UserRole, file_path_renamed)
+
+                self.current_item_renamed.emit(file_path_renamed)
+
+        logger.debug('File system watcher updated files.')
 
     def _search_text_changed_line_edit(self, text: str) -> None:
         text = text.lower()
+        items = self.file_explorer_tree_widget.get_top_level_items()
 
-        for i in range(self.file_explorer_tree_widget.topLevelItemCount()):
-            item = self.file_explorer_tree_widget.topLevelItem(i)
+        for item in items:
             item_text = item.text(0)
             item.setHidden(text not in item_text.lower())
 
@@ -140,12 +168,11 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         if self.library_path:
             vex_files = core.get_vex_files(self.library_path)
-
             self.number_of_files = len(vex_files)
 
-            for file_path, base_name in vex_files:
+            for file_path in vex_files:
                 tree_widget_item = QtWidgets.QTreeWidgetItem()
-                tree_widget_item.setText(0, base_name)
+                tree_widget_item.setText(0, Path(file_path).stem)
                 tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
                 self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
@@ -156,17 +183,12 @@ class FileExplorerWidget(QtWidgets.QWidget):
             self.file_system_watcher.removePaths(file_system_watcher_directories)
 
     def select_current_item(self) -> None:
-        base_name = Path(self.current_item_path).stem
-        items = self.file_explorer_tree_widget.findItems(base_name, QtCore.Qt.MatchExactly, 0)
+        item = self.file_explorer_tree_widget.find_item_by_path(self.current_item_path)
 
-        if items:
-            item = items[0]
-            item_data = item.data(0, QtCore.Qt.UserRole)
+        if item:
+            self.file_explorer_tree_widget.setCurrentItem(item)
 
-            if os.path.normpath(item_data) == os.path.normpath(self.current_item_path):
-                self.file_explorer_tree_widget.setCurrentItem(item)
-
-                logger.debug(f'{item.text(0)!r} item selected.')
+            logger.debug(f'{item.text(0)!r} item selected.')
 
     def _set_file_system_watcher(self) -> None:
         self.clear_file_system_watcher()

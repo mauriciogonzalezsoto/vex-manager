@@ -62,13 +62,12 @@ def delete_file(file_path: str) -> None:
         logger.error(f'{file_path!r} does not exit.')
 
 
-def get_vex_files(library_path: str) -> list[tuple[str, str]]:
+def get_vex_files(library_path: str) -> list[str]:
     vex_files = []
 
     if os.path.exists(library_path):
         for vex_file_path in glob.glob(os.path.join(library_path, f'*{FILE_EXTENSION}')):
-            base_name = Path(vex_file_path).stem
-            vex_files.append((vex_file_path, base_name))
+            vex_files.append(os.path.normpath(vex_file_path))
 
     return vex_files
 

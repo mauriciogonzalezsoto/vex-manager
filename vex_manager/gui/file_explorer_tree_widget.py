@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 
+from pathlib import Path
 import logging
+import os
 
 import vex_manager.core as core
 
@@ -27,6 +31,28 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         self.rename_item(column=column, item=item, new_name=new_name)
         self.removeItemWidget(item, column)
+
+    def find_item_by_path(self, path: str) -> QtWidgets.QTreeWidgetItem | None:
+        base_name = Path(path).stem
+        items = self.findItems(base_name, QtCore.Qt.MatchExactly, 0)
+
+        if items:
+            item = items[0]
+            item_data = item.data(0, QtCore.Qt.UserRole)
+
+            if item_data == os.path.normpath(path):
+                return item
+
+        return
+
+    def get_top_level_items(self) -> list[QtWidgets.QTreeWidgetItem]:
+        items = []
+
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            items.append(item)
+
+        return items
 
     def rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, new_name: str) -> None:
         if item:
