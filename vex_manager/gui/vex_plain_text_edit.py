@@ -7,6 +7,7 @@ import json
 import os
 
 from vex_manager.config import VEXSyntaxis
+from vex_manager.config import ColorScheme
 import vex_manager.utils as utils
 
 
@@ -20,24 +21,25 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
         self.preferences_path = utils.get_preferences_path()
 
+        self.font = QtGui.QFont()
+
         self.auto_indent = True
         self.insert_closing_brackets = True
         self.insert_closing_quotes = True
+
         self.backspace_on_tab_space = True
         self.tab_size = 4
 
-        self.font = QtGui.QFont()
-        self.font.setBold(True)
-        self.font.setWordSpacing(5)
-        self.font.setPointSize(8)
+        self.font_family = ''
+        self.font_size = 8
 
-        self.setFont(self.font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setWordWrapMode(QtGui.QTextOption.NoWrap)
 
-        VEXSyntaxHighlighter(self.document())
+        self.vex_syntax_highlighter = VEXSyntaxHighlighter(self.document())
 
-        self.load_preferences()
+        self._load_preferences()
+        self.set_font_and_colors()
 
     def _handle_cursor_behavior(self, char: str) -> bool:
         text_cursor = self.textCursor()
@@ -82,7 +84,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         text_cursor.movePosition(text_cursor.PreviousCharacter)
         self.setTextCursor(text_cursor)
 
-    def load_preferences(self) -> None:
+    def _load_preferences(self) -> None:
         settings = {}
 
         if os.path.exists(self.preferences_path):
@@ -92,8 +94,30 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
         self.auto_indent = settings.get('auto_indent', True)
         self.insert_closing_brackets = settings.get('insert_closing_brackets', True)
         self.insert_closing_quotes = settings.get('insert_closing_quotes', True)
+
         self.backspace_on_tab_space = settings.get('backspace_on_tab_stop', True)
         self.tab_size = settings.get('tab_size', 4)
+        self.color_scheme = settings.get('color_scheme', {})
+
+        if not self.color_scheme:
+            for color_scheme in ColorScheme:
+                color_scheme = color_scheme.value
+
+                self.color_scheme[color_scheme['name']] = color_scheme['color']
+
+        self.font_family = settings.get('font', 'Source Sans Pro')
+        self.font_size = settings.get('font_size', 8)
+
+    def set_font_and_colors(self) -> None:
+        self._load_preferences()
+
+        self.font.setBold(True)
+        self.font.setFamily(self.font_family)
+        self.font.setPointSize(self.font_size)
+        self.font.setWordSpacing(5)
+        self.setFont(self.font)
+
+        self.vex_syntax_highlighter.set_vex_systax_highlighter_colors(self.color_scheme)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         key = event.key()
@@ -240,30 +264,34 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         data_types = '|'.join(VEXSyntaxis.DATA_TYPES)
         vex_functions = '|'.join(VEXSyntaxis.VEX_FUNCTIONS)
 
-        self.keywords_text_char_format = QtGui.QTextCharFormat()
-        self.keywords_text_char_format.setForeground(QtGui.QColor('#1c78c0'))
-
-        self.data_types_text_char_format = QtGui.QTextCharFormat()
-        self.data_types_text_char_format.setForeground(QtGui.QColor('#8ed5fa'))
-
-        self.vex_functions_text_char_format = QtGui.QTextCharFormat()
-        self.vex_functions_text_char_format.setForeground(QtGui.QColor('#7E94CE'))
-
-        self.attribute_text_char_format = QtGui.QTextCharFormat()
-        self.attribute_text_char_format.setForeground(QtGui.QColor('yellow'))
-
-        self.string_literal_text_char_format = QtGui.QTextCharFormat()
-        self.string_literal_text_char_format.setForeground(QtGui.QColor('green'))
-
-        self.comment_text_char_format = QtGui.QTextCharFormat()
-        self.comment_text_char_format.setForeground(QtGui.QColor('gray'))
-
+        self.strings_reg_exp = QtCore.QRegExp(r'(["\'].*["\'])')
+        self.numbers_reg_exp = QtCore.QRegExp(r'\b\d+(\.\d+)?\b')
+        self.comments_reg_exp = QtCore.QRegExp(r'//.*')
+        self.functions_reg_exp = QtCore.QRegExp(rf'\b({vex_functions})\b')
         self.keywords_reg_exp = QtCore.QRegExp(rf'\b({keywords})\b')
-        self.data_types_reg_exp = QtCore.QRegExp(rf'\b({data_types})\b')
-        self.vex_functions_reg_exp = QtCore.QRegExp(rf'\b({vex_functions})\b')
-        self.attribute_reg_exp = QtCore.QRegExp(r'[\w]*@[\w-]+')
-        self.string_literal_reg_exp = QtCore.QRegExp(r'(["\'].*["\'])')
-        self.comment_reg_exp = QtCore.QRegExp(r'//.*')
+        self.types_reg_exp = QtCore.QRegExp(rf'\b({data_types})\b')
+        self.references_reg_exp = QtCore.QRegExp(r'[\w]*@[\w-]+')
+
+        self.plain_text_char_format = QtGui.QTextCharFormat()
+        self.strings_text_char_format = QtGui.QTextCharFormat()
+        self.numbers_text_char_format = QtGui.QTextCharFormat()
+        self.comments_text_char_format = QtGui.QTextCharFormat()
+        self.functions_text_char_format = QtGui.QTextCharFormat()
+        self.keywords_text_char_format = QtGui.QTextCharFormat()
+        self.types_text_char_format = QtGui.QTextCharFormat()
+        self.references_text_char_format = QtGui.QTextCharFormat()
+
+    def set_vex_systax_highlighter_colors(self, color_scheme: dict[str, tuple[float, float, float]]) -> None:
+        self.plain_text_char_format.setForeground(QtGui.QColor(*color_scheme['plain']))
+        self.strings_text_char_format.setForeground(QtGui.QColor(*color_scheme['strings']))
+        self.numbers_text_char_format.setForeground(QtGui.QColor(*color_scheme['numbers']))
+        self.comments_text_char_format.setForeground(QtGui.QColor(*color_scheme['comments']))
+        self.functions_text_char_format.setForeground(QtGui.QColor(*color_scheme['functions']))
+        self.keywords_text_char_format.setForeground(QtGui.QColor(*color_scheme['keywords']))
+        self.types_text_char_format.setForeground(QtGui.QColor(*color_scheme['types']))
+        self.references_text_char_format.setForeground(QtGui.QColor(*color_scheme['references']))
+
+        self.rehighlight()
 
     def _set_vex_syntax_highlighter(
             self,
@@ -280,32 +308,46 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
             index = reg_exp.indexIn(text, index + length)
 
     def highlightBlock(self, text: str) -> None:
+        self.setFormat(0, len(text), self.plain_text_char_format)
+
+        self._set_vex_syntax_highlighter(
+            reg_exp=self.numbers_reg_exp,
+            text=text,
+            text_char_format=self.numbers_text_char_format
+        )
+
+        self._set_vex_syntax_highlighter(
+            reg_exp=self.strings_reg_exp,
+            text=text,
+            text_char_format=self.strings_text_char_format
+        )
+
+        self._set_vex_syntax_highlighter(
+            reg_exp=self.functions_reg_exp,
+            text=text,
+            text_char_format=self.functions_text_char_format
+        )
+
         self._set_vex_syntax_highlighter(
             reg_exp=self.keywords_reg_exp,
             text=text,
-            text_char_format=self.keywords_text_char_format)
+            text_char_format=self.keywords_text_char_format
+        )
 
         self._set_vex_syntax_highlighter(
-            reg_exp=self.data_types_reg_exp,
+            reg_exp=self.types_reg_exp,
             text=text,
-            text_char_format=self.data_types_text_char_format)
+            text_char_format=self.types_text_char_format
+        )
 
         self._set_vex_syntax_highlighter(
-            reg_exp=self.vex_functions_reg_exp,
+            reg_exp=self.references_reg_exp,
             text=text,
-            text_char_format=self.vex_functions_text_char_format)
+            text_char_format=self.references_text_char_format
+        )
 
         self._set_vex_syntax_highlighter(
-            reg_exp=self.attribute_reg_exp,
+            reg_exp=self.comments_reg_exp,
             text=text,
-            text_char_format=self.attribute_text_char_format)
-
-        self._set_vex_syntax_highlighter(
-            reg_exp=self.string_literal_reg_exp,
-            text=text,
-            text_char_format=self.string_literal_text_char_format)
-
-        self._set_vex_syntax_highlighter(
-            reg_exp=self.comment_reg_exp,
-            text=text,
-            text_char_format=self.comment_text_char_format)
+            text_char_format=self.comments_text_char_format
+        )

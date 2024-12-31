@@ -58,9 +58,9 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(QtCore.QMargins(6, 3, 6, 6))
+        main_layout.setContentsMargins(6, 3, 6, 6)
         main_layout.setMenuBar(self.menu_bar)
-        main_layout.setSpacing(3)
+        main_layout.setSpacing(6)
 
         splitter = QtWidgets.QSplitter()
         main_layout.addWidget(splitter)
@@ -70,7 +70,8 @@ class VEXManagerUI(QtWidgets.QWidget):
 
         left_layout = QtWidgets.QVBoxLayout()
         left_layout.addWidget(self.file_explorer_widget)
-        left_layout.setContentsMargins(QtCore.QMargins())
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(6)
         left_widget.setLayout(left_layout)
 
         right_widget = QtWidgets.QWidget()
@@ -78,7 +79,8 @@ class VEXManagerUI(QtWidgets.QWidget):
 
         right_layout = QtWidgets.QVBoxLayout()
         right_layout.addWidget(self.vex_editor_widget)
-        right_layout.setContentsMargins(QtCore.QMargins())
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(6)
         right_widget.setLayout(right_layout)
 
         splitter.setCollapsible(0, True)
@@ -114,6 +116,8 @@ class VEXManagerUI(QtWidgets.QWidget):
         self._load_preferences()
         self._update()
 
+        self.vex_editor_widget.vex_plain_text_editor.set_font_and_colors()
+
     def _file_explorer_current_item_changed_widget(self, file_path: str) -> None:
         self.current_vex_file_path = file_path
         self.vex_editor_widget.set_file_path(self.current_vex_file_path)
@@ -130,10 +134,15 @@ class VEXManagerUI(QtWidgets.QWidget):
         self.file_explorer_widget.set_current_path(self.vex_editor_widget.get_current_file_path())
 
     def _update(self) -> None:
-        self.file_explorer_widget.set_library_path(self.library_path)
-        self.vex_editor_widget.set_library_path(self.library_path)
+        if self.file_explorer_widget.get_library_path() != self.library_path:
+            self.file_explorer_widget.set_library_path(self.library_path)
+
+        if self.vex_editor_widget.get_library_path() != self.library_path:
+            self.vex_editor_widget.set_library_path(self.library_path)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         super().closeEvent(event)
 
         self.file_explorer_widget.clear_file_system_watcher()
+
+        self.preferences_ui.close()

@@ -109,6 +109,9 @@ class VEXEditorWidget(QtWidgets.QWidget):
     def get_current_file_path(self) -> str:
         return self.file_path
 
+    def get_library_path(self) -> str:
+        return self.library_path
+
     def set_file_path(self, file_path: str) -> None:
         self.file_path = file_path
 

@@ -26,7 +26,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         self.preferences_path = utils.get_preferences_path()
 
-        self.warm_before_deleting_a_file = True
+        self.warn_before_deleting_a_file = True
 
         self.library_path = ''
         self.current_item_path = ''
@@ -76,7 +76,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
             with open(self.preferences_path, 'r') as file_for_read:
                 settings = json.load(file_for_read)
 
-        self.warm_before_deleting_a_file = settings.get('warm_before_deleting_a_file', True)
+        self.warn_before_deleting_a_file = settings.get('warn_before_deleting_a_file', True)
 
     def _directory_changed_file_system_watcher(self) -> None:
         vex_files = core.get_vex_files(self.library_path)
@@ -145,7 +145,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
             result = 0  # Result = 0 means that the user selected 'Yes'.
 
-            if self.warm_before_deleting_a_file:
+            if self.warn_before_deleting_a_file:
                 result = hou.ui.displayCustomConfirmation(
                     'Delete selected VEX file?',
                     buttons=('Yes', 'No'),
@@ -176,20 +176,6 @@ class FileExplorerWidget(QtWidgets.QWidget):
                 tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
                 self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
 
-    def clear_file_system_watcher(self) -> None:
-        file_system_watcher_directories = self.file_system_watcher.directories()
-
-        if file_system_watcher_directories:
-            self.file_system_watcher.removePaths(file_system_watcher_directories)
-
-    def select_current_item(self) -> None:
-        item = self.file_explorer_tree_widget.find_item_by_path(self.current_item_path)
-
-        if item:
-            self.file_explorer_tree_widget.setCurrentItem(item)
-
-            logger.debug(f'{item.text(0)!r} item selected.')
-
     def _set_file_system_watcher(self) -> None:
         self.clear_file_system_watcher()
 
@@ -200,6 +186,23 @@ class FileExplorerWidget(QtWidgets.QWidget):
             self.file_system_watcher.addPath(self.library_path)
 
             logger.debug(f'File system watcher set to {self.library_path!r}')
+
+    def clear_file_system_watcher(self) -> None:
+        file_system_watcher_directories = self.file_system_watcher.directories()
+
+        if file_system_watcher_directories:
+            self.file_system_watcher.removePaths(file_system_watcher_directories)
+
+    def get_library_path(self) -> str:
+        return self.library_path
+
+    def select_current_item(self) -> None:
+        item = self.file_explorer_tree_widget.find_item_by_path(self.current_item_path)
+
+        if item:
+            self.file_explorer_tree_widget.setCurrentItem(item)
+
+            logger.debug(f'{item.text(0)!r} item selected.')
 
     def rename_current_item(self, new_name: str) -> None:
         current_item = self.file_explorer_tree_widget.currentItem()
