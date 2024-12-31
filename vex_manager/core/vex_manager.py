@@ -41,6 +41,5 @@ def set_vex_code_in_selected_wrangle_node(vex_code: str, insert: bool = False) -
                 snippet_parm.set(new_vex_code)
             else:
                 logger.error(f'{node.name()!r} is not a wrangle node.')
-                logger.error(node.type().name())
         else:
             logger.error('There is no selected node.')
