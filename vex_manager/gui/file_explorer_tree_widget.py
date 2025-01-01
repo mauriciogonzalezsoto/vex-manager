@@ -10,7 +10,7 @@ import os
 import vex_manager.core as core
 
 
-logger = logging.getLogger(f'vex_manager.{__name__}')
+logger = logging.getLogger(f"vex_manager.{__name__}")
 
 
 class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
@@ -48,13 +48,14 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         return tuple(items)
 
-    def rename_item(self, item: QtWidgets.QTreeWidgetItem, new_name: str = '') -> None:
-        logger.debug(f'rename_item: ')
+    def rename_item(self, item: QtWidgets.QTreeWidgetItem, new_name: str = "") -> None:
         if not new_name:
             new_name = item.text(0)
 
         file_path = item.data(0, QtCore.Qt.UserRole)
-        new_file_path, new_base_name = core.rename_vex_file(file_path=file_path, new_name=new_name)
+        new_file_path, new_base_name = core.rename_vex_file(
+            file_path=file_path, new_name=new_name
+        )
 
         self.blockSignals(True)
         item.setData(0, QtCore.Qt.UserRole, new_file_path)

@@ -10,7 +10,7 @@ import vex_manager.utils as utils
 import vex_manager.core as core
 
 
-logger = logging.getLogger(f'vex_manager.{__name__}')
+logger = logging.getLogger(f"vex_manager.{__name__}")
 
 
 class VEXEditorWidget(QtWidgets.QWidget):
@@ -20,9 +20,9 @@ class VEXEditorWidget(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
-        self.file_path = ''
-        self.base_name = ''
-        self.library_path = ''
+        self.file_path = ""
+        self.base_name = ""
+        self.library_path = ""
 
         self._create_widgets()
         self._create_layouts()
@@ -33,11 +33,11 @@ class VEXEditorWidget(QtWidgets.QWidget):
 
         self.vex_plain_text_editor = VEXPlainTextEdit()
 
-        self.save_changes_push_button = QtWidgets.QPushButton('Save Changes')
+        self.save_changes_push_button = QtWidgets.QPushButton("Save Changes")
 
-        self.replace_code_push_button = QtWidgets.QPushButton('Replace Code')
+        self.replace_code_push_button = QtWidgets.QPushButton("Replace Code")
 
-        self.insert_code_push_button = QtWidgets.QPushButton('Insert Code')
+        self.insert_code_push_button = QtWidgets.QPushButton("Insert Code")
 
     def _create_layouts(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -53,10 +53,18 @@ class VEXEditorWidget(QtWidgets.QWidget):
         main_layout.addLayout(layout)
 
     def _create_connections(self) -> None:
-        self.name_line_edit.editingFinished.connect(self._name_editing_finished_line_edit)
-        self.save_changes_push_button.clicked.connect(self._save_changes_clicked_push_button)
-        self.replace_code_push_button.clicked.connect(self._replace_code_clicked_push_button)
-        self.insert_code_push_button.clicked.connect(self._insert_code_clicked_push_button)
+        self.name_line_edit.editingFinished.connect(
+            self._name_editing_finished_line_edit
+        )
+        self.save_changes_push_button.clicked.connect(
+            self._save_changes_clicked_push_button
+        )
+        self.replace_code_push_button.clicked.connect(
+            self._replace_code_clicked_push_button
+        )
+        self.insert_code_push_button.clicked.connect(
+            self._insert_code_clicked_push_button
+        )
 
     def _name_editing_finished_line_edit(self) -> None:
         name = self.name_line_edit.text()
@@ -65,7 +73,7 @@ class VEXEditorWidget(QtWidgets.QWidget):
             if os.path.exists(self.library_path):
                 self.name_editing_finished.emit(name)
         else:
-            logger.error(f'Invalid file name {name!r}')
+            logger.error(f"Invalid file name {name!r}")
 
     def _save_changes_clicked_push_button(self) -> None:
         if self.file_path:
@@ -74,9 +82,11 @@ class VEXEditorWidget(QtWidgets.QWidget):
             name = self.name_line_edit.text()
 
             if not utils.is_valid_file_name(name):
-                name = ''
+                name = ""
 
-            self.file_path, self.base_name = core.create_new_vex_file(library_path=self.library_path, name=name)
+            self.file_path, self.base_name = core.create_new_vex_file(
+                library_path=self.library_path, name=name
+            )
 
             if self.file_path:
 
@@ -85,26 +95,30 @@ class VEXEditorWidget(QtWidgets.QWidget):
                 self.save_clicked.emit()
 
     def _replace_code_clicked_push_button(self) -> None:
-        core.set_vex_code_in_selected_wrangle_node(vex_code=self.vex_plain_text_editor.toPlainText())
+        core.set_vex_code_in_selected_wrangle_node(
+            vex_code=self.vex_plain_text_editor.toPlainText()
+        )
 
     def _insert_code_clicked_push_button(self) -> None:
-        core.set_vex_code_in_selected_wrangle_node(vex_code=self.vex_plain_text_editor.toPlainText(), insert=True)
+        core.set_vex_code_in_selected_wrangle_node(
+            vex_code=self.vex_plain_text_editor.toPlainText(), insert=True
+        )
 
     def _save_file(self) -> None:
-        with open(self.file_path, 'w') as file_to_write:
+        with open(self.file_path, "w") as file_to_write:
             content = self.vex_plain_text_editor.toPlainText()
             file_to_write.write(content)
 
         self.name_line_edit.setText(self.base_name)
 
-        logger.debug(f'{self.file_path!r} saved.')
+        logger.debug(f"{self.file_path!r} saved.")
 
     def display_code(self) -> None:
         if os.path.exists(self.file_path):
             with open(self.file_path) as file_for_read:
                 self.vex_plain_text_editor.setPlainText(file_for_read.read())
         else:
-            self.vex_plain_text_editor.setPlainText('')
+            self.vex_plain_text_editor.setPlainText("")
 
     def get_current_file_path(self) -> str:
         return self.file_path
@@ -119,7 +133,7 @@ class VEXEditorWidget(QtWidgets.QWidget):
             self.base_name = Path(self.file_path).stem
             self.name_line_edit.setText(self.base_name)
         else:
-            self.name_line_edit.setText('')
+            self.name_line_edit.setText("")
 
     def set_library_path(self, library_path: str) -> None:
         self.library_path = library_path

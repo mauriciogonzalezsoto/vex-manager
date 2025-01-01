@@ -13,11 +13,11 @@ def main():
 
     for i in range(10):
         item = QtWidgets.QTreeWidgetItem()
-        item.setText(0, f'Item {i}')
+        item.setText(0, f"Item {i}")
         texture_settings_widget.file_explorer_tree_widget.addTopLevelItem(item)
 
     sys.exit(app.exec_())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
