@@ -26,9 +26,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
         self.preferences_path = utils.get_preferences_path()
 
+        self.library_path = ''
         self.warn_before_deleting_a_file = True
 
-        self.library_path = ''
         self.current_item_path = ''
 
         self.file_system_watcher = QtCore.QFileSystemWatcher()
@@ -171,10 +171,11 @@ class FileExplorerWidget(QtWidgets.QWidget):
             self.number_of_files = len(vex_files)
 
             for file_path in vex_files:
-                tree_widget_item = QtWidgets.QTreeWidgetItem()
-                tree_widget_item.setText(0, Path(file_path).stem)
-                tree_widget_item.setData(0, QtCore.Qt.UserRole, file_path)
-                self.file_explorer_tree_widget.addTopLevelItem(tree_widget_item)
+                item = QtWidgets.QTreeWidgetItem()
+                item.setData(0, QtCore.Qt.UserRole, file_path)
+                item.setFlags(QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+                item.setText(0, Path(file_path).stem)
+                self.file_explorer_tree_widget.addTopLevelItem(item)
 
     def _set_file_system_watcher(self) -> None:
         self.clear_file_system_watcher()
@@ -206,7 +207,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
 
     def rename_current_item(self, new_name: str) -> None:
         current_item = self.file_explorer_tree_widget.currentItem()
-        self.file_explorer_tree_widget.rename_item(column=0, item=current_item, new_name=new_name)
+        self.file_explorer_tree_widget.rename_item(item=current_item, new_name=new_name)
 
     def set_current_path(self, file_path: str) -> None:
         self.current_item_path = file_path

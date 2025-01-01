@@ -24,13 +24,7 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
         self._create_connections()
 
     def _create_connections(self) -> None:
-        self.itemDoubleClicked.connect(self.editItem)
-
-    def _rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, line_edit: QtWidgets.QLineEdit) -> None:
-        new_name = line_edit.text()
-
-        self.rename_item(column=column, item=item, new_name=new_name)
-        self.removeItemWidget(item, column)
+        self.itemChanged.connect(self.rename_item)
 
     def find_item_by_path(self, path: str) -> QtWidgets.QTreeWidgetItem | None:
         base_name = Path(path).stem
@@ -45,30 +39,26 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
 
         return
 
-    def get_top_level_items(self) -> list[QtWidgets.QTreeWidgetItem]:
+    def get_top_level_items(self) -> tuple[QtWidgets.QTreeWidgetItem, ...]:
         items = []
 
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             items.append(item)
 
-        return items
+        return tuple(items)
 
-    def rename_item(self, column: int, item: QtWidgets.QTreeWidgetItem, new_name: str) -> None:
-        if item:
-            file_path = item.data(0, QtCore.Qt.UserRole)
-            new_file_path, new_base_name = core.rename_vex_file(file_path, new_name)
+    def rename_item(self, item: QtWidgets.QTreeWidgetItem, new_name: str = '') -> None:
+        logger.debug(f'rename_item: ')
+        if not new_name:
+            new_name = item.text(0)
 
-            if file_path != new_file_path:
-                item.setText(column, new_base_name)
-                item.setData(column, QtCore.Qt.UserRole, new_file_path)
+        file_path = item.data(0, QtCore.Qt.UserRole)
+        new_file_path, new_base_name = core.rename_vex_file(file_path=file_path, new_name=new_name)
 
-                self.item_renamed.emit(new_file_path)
+        self.blockSignals(True)
+        item.setData(0, QtCore.Qt.UserRole, new_file_path)
+        item.setText(0, new_base_name)
+        self.blockSignals(False)
 
-    def editItem(self, item: QtWidgets.QTreeWidgetItem, column: int) -> None:
-        line_edit = QtWidgets.QLineEdit(self)
-        line_edit.setText(item.text(column))
-
-        self.setItemWidget(item, column, line_edit)
-
-        line_edit.editingFinished.connect(lambda: self._rename_item(column=column, item=item, line_edit=line_edit))
+        self.item_renamed.emit(new_file_path)
