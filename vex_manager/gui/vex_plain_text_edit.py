@@ -15,11 +15,10 @@ logger = logging.getLogger(f"vex_manager.{__name__}")
 
 
 class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
+    PREFERENCES_PATH = utils.get_preferences_path()
 
     def __init__(self) -> None:
         super().__init__()
-
-        self.preferences_path = utils.get_preferences_path()
 
         self.font = QtGui.QFont()
 
@@ -87,8 +86,8 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
     def _load_preferences(self) -> None:
         settings = {}
 
-        if os.path.exists(self.preferences_path):
-            with open(self.preferences_path, "r") as file_for_read:
+        if os.path.exists(VEXPlainTextEdit.PREFERENCES_PATH):
+            with open(VEXPlainTextEdit.PREFERENCES_PATH, "r") as file_for_read:
                 settings = json.load(file_for_read)
 
         self.auto_indent = settings.get("auto_indent", True)

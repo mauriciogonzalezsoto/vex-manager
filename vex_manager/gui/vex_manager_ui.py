@@ -22,10 +22,11 @@ class VEXManagerUI(QtWidgets.QWidget):
     WINDOW_NAME = "vexManager"
     WINDOW_TITLE = "VEX Manager"
 
+    PREFERENCES_PATH = utils.get_preferences_path()
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.preferences_path = utils.get_preferences_path()
         self.preferences_ui = PreferencesUI(self, QtCore.Qt.Dialog)
 
         self.library_path = ""
@@ -109,8 +110,8 @@ class VEXManagerUI(QtWidgets.QWidget):
     def _load_preferences(self) -> None:
         preferences = {}
 
-        if os.path.exists(self.preferences_path):
-            with open(self.preferences_path, "r") as file_for_read:
+        if os.path.exists(VEXManagerUI.PREFERENCES_PATH):
+            with open(VEXManagerUI.PREFERENCES_PATH, "r") as file_for_read:
                 preferences = json.load(file_for_read)
 
         self.library_path = preferences.get("library_path", "")

@@ -23,12 +23,13 @@ class PreferencesUI(QtWidgets.QWidget):
     TABS_AND_SPACING = "Tabs and Spacing"
     FONTS_AND_COLORS = "Fonts and Colors"
 
+    PREFERENCES_PATH = utils.get_preferences_path()
+
     on_save_clicked = QtCore.Signal()
 
     def __init__(self, parent: QtWidgets.QWidget, f: QtCore.Qt.WindowFlags) -> None:
         super().__init__(parent, f)
 
-        self.preferences_path = utils.get_preferences_path()
         self.color_scheme = {}
 
         self.resize(400, 600)
@@ -282,8 +283,8 @@ class PreferencesUI(QtWidgets.QWidget):
     def _load_preferences(self) -> None:
         settings = {}
 
-        if os.path.exists(self.preferences_path):
-            with open(self.preferences_path, "r") as file_for_read:
+        if os.path.exists(PreferencesUI.PREFERENCES_PATH):
+            with open(PreferencesUI.PREFERENCES_PATH, "r") as file_for_read:
                 settings = json.load(file_for_read)
 
         self.library_path_line_edit.setText(settings.get("library_path", ""))
@@ -328,8 +329,8 @@ class PreferencesUI(QtWidgets.QWidget):
             "auto_indent": self.auto_indent_check_box.isChecked(),
         }
 
-        if self.preferences_path:
-            with open(self.preferences_path, "w") as file_for_write:
+        if PreferencesUI.PREFERENCES_PATH:
+            with open(PreferencesUI.PREFERENCES_PATH, "w") as file_for_write:
                 json.dump(settings, file_for_write, indent=4)
         else:
             logger.error(f"No preferences path.")

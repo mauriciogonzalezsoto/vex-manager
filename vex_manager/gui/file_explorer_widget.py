@@ -18,13 +18,13 @@ logger = logging.getLogger(f"vex_manager.{__name__}")
 
 
 class FileExplorerWidget(QtWidgets.QWidget):
+    PREFERENCES_PATH = utils.get_preferences_path()
+
     current_item_changed = QtCore.Signal(str)
     current_item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
-
-        self.preferences_path = utils.get_preferences_path()
 
         self.library_path = ""
         self.warn_before_deleting_a_file = True
@@ -78,8 +78,8 @@ class FileExplorerWidget(QtWidgets.QWidget):
     def _load_preferences(self) -> None:
         settings = {}
 
-        if os.path.exists(self.preferences_path):
-            with open(self.preferences_path, "r") as file_for_read:
+        if os.path.exists(FileExplorerWidget.PREFERENCES_PATH):
+            with open(FileExplorerWidget.PREFERENCES_PATH, "r") as file_for_read:
                 settings = json.load(file_for_read)
 
         self.warn_before_deleting_a_file = settings.get(
