@@ -24,8 +24,23 @@ class VEXManagerUI(QtWidgets.QWidget):
 
     PREFERENCES_PATH = utils.get_preferences_path()
 
+    dialog_instance = None
+
+    @classmethod
+    def display(cls) -> None:
+        if not cls.dialog_instance:
+            cls.dialog_instance = VEXManagerUI()
+
+        if cls.dialog_instance.isHidden():
+            cls.dialog_instance.show()
+        else:
+            cls.dialog_instance.raise_()
+            cls.dialog_instance.activateWindow()
+
     def __init__(self) -> None:
         super().__init__()
+
+        self.geometry = None
 
         self.preferences_ui = PreferencesUI(self, QtCore.Qt.Dialog)
 
@@ -154,8 +169,17 @@ class VEXManagerUI(QtWidgets.QWidget):
             self.vex_editor_widget.set_library_path(self.library_path)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        super().closeEvent(event)
+        if isinstance(self, VEXManagerUI):
+            super().closeEvent(event)
+
+            self.geometry = self.saveGeometry()
 
         self.file_explorer_widget.clear_file_system_watcher()
 
         self.preferences_ui.close()
+
+    def showEvent(self, event: QtGui.QShowEvent) -> None:
+        super().showEvent(event)
+
+        if self.geometry:
+            self.restoreGeometry(self.geometry)

@@ -29,6 +29,6 @@ VEX Manager is a tool for Houdini that saves, manages, and imports VEX code pres
    from vex_manager import VEXManagerUI
    
    vex_manager_ui = VEXManagerUI()
-   vex_manager_ui.show()
+   vex_manager_ui.display()
     ```
 4. Click **Accept** to save the new button on the Shelf
