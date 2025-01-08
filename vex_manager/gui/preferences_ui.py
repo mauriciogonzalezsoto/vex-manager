@@ -86,10 +86,10 @@ class PreferencesUI(QtWidgets.QWidget):
         self.font_size_spin_box = QtWidgets.QSpinBox()
         self.font_size_spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         self.font_size_spin_box.setFixedWidth(75)
-        self.font_size_spin_box.setRange(6, 20)
+        self.font_size_spin_box.setRange(6, 30)
 
         self.font_size_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.font_size_slider.setRange(6, 20)
+        self.font_size_slider.setRange(6, 30)
         self.font_size_slider.setSingleStep(1)
 
         self.color_scheme_list_widget = QtWidgets.QListWidget()

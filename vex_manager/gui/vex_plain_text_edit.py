@@ -128,7 +128,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
             if ctrl:
                 point_size = self.font.pointSize()
 
-                if point_size < 20:
+                if point_size < 30:
                     self.font.setPointSize(point_size + 1)
                     self.setFont(self.font)
 
@@ -331,12 +331,6 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         )
 
         self._set_vex_syntax_highlighter(
-            reg_exp=self.strings_reg_exp,
-            text=text,
-            text_char_format=self.strings_text_char_format,
-        )
-
-        self._set_vex_syntax_highlighter(
             reg_exp=self.functions_reg_exp,
             text=text,
             text_char_format=self.functions_text_char_format,
@@ -364,4 +358,10 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
             reg_exp=self.comments_reg_exp,
             text=text,
             text_char_format=self.comments_text_char_format,
+        )
+
+        self._set_vex_syntax_highlighter(
+            reg_exp=self.strings_reg_exp,
+            text=text,
+            text_char_format=self.strings_text_char_format,
         )
