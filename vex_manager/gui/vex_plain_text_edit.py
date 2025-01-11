@@ -264,7 +264,7 @@ class VEXSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         data_types = "|".join(VEXSyntaxis.DATA_TYPES)
         vex_functions = "|".join(VEXSyntaxis.VEX_FUNCTIONS)
 
-        self.strings_reg_exp = QtCore.QRegExp(r'(["\'].*["\'])')
+        self.strings_reg_exp = QtCore.QRegExp(r'(["\'])((?:\\.|[^"\\])*)\1')
         self.numbers_reg_exp = QtCore.QRegExp(r"\b\d+(\.\d+)?\b")
         self.comments_reg_exp = QtCore.QRegExp(r"//.*")
         self.functions_reg_exp = QtCore.QRegExp(rf"\b({vex_functions})\b")
