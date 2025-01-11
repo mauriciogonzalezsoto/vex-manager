@@ -66,6 +66,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
         )
 
         self.search_line_edit.textChanged.connect(self._search_text_changed_line_edit)
+        self.file_explorer_tree_widget.del_key_pressed.connect(
+            self._file_explorer_del_key_pressed_tree_widget
+        )
         self.file_explorer_tree_widget.currentItemChanged.connect(
             self._file_explorer_current_item_changed_tree_widget
         )
@@ -131,6 +134,9 @@ class FileExplorerWidget(QtWidgets.QWidget):
             item_text = item.text(0)
             item.setHidden(text not in item_text.lower())
 
+    def _file_explorer_del_key_pressed_tree_widget(self) -> None:
+        self._delete_selected_item()
+
     def _file_explorer_current_item_changed_tree_widget(
         self, item: QtWidgets.QTreeWidgetItem
     ) -> None:
@@ -149,30 +155,7 @@ class FileExplorerWidget(QtWidgets.QWidget):
         self.select_current_item()
 
     def _delete_clicked_push_button(self) -> None:
-        selected_items = self.file_explorer_tree_widget.selectedItems()
-
-        if selected_items:
-            self._load_preferences()
-
-            result = 0  # result = 0 means that the user selected "Yes"
-
-            if self.warn_before_deleting_a_file:
-                result = hou.ui.displayCustomConfirmation(
-                    "Delete selected VEX file?",
-                    buttons=("Yes", "No"),
-                    close_choice=1,
-                    default_choice=0,
-                    suppress=hou.confirmType.NoConfirmType,
-                    title="Delete",
-                )
-
-            if not result:
-                item = selected_items[0]
-                file_path = item.data(0, QtCore.Qt.UserRole)
-                shiboken2.delete(item)
-                core.delete_file(file_path)
-        else:
-            logger.debug("No VEX file selected to delete.")
+        self._delete_selected_item()
 
     def _create_tree_widget_items(self) -> None:
         self.file_explorer_tree_widget.clear()
@@ -191,6 +174,31 @@ class FileExplorerWidget(QtWidgets.QWidget):
                 )
                 item.setText(0, Path(file_path).stem)
                 self.file_explorer_tree_widget.addTopLevelItem(item)
+
+    def _delete_selected_item(self) -> None:
+        item = self.file_explorer_tree_widget.currentItem()
+
+        if item:
+            self._load_preferences()
+
+            result = 0  # result = 0 means that the user selected "Yes"
+
+            if self.warn_before_deleting_a_file:
+                result = hou.ui.displayCustomConfirmation(
+                    "Delete selected VEX file?",
+                    buttons=("Yes", "No"),
+                    close_choice=1,
+                    default_choice=0,
+                    suppress=hou.confirmType.NoConfirmType,
+                    title="Delete",
+                )
+
+            if not result:
+                file_path = item.data(0, QtCore.Qt.UserRole)
+                shiboken2.delete(item)
+                core.delete_file(file_path)
+        else:
+            logger.debug("No VEX file selected to delete.")
 
     def _set_file_system_watcher(self) -> None:
         self.clear_file_system_watcher()

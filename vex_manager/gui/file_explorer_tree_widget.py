@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PySide2 import QtWidgets
+from PySide2 import QtGui
 from PySide2 import QtCore
 
 from pathlib import Path
@@ -14,6 +15,7 @@ logger = logging.getLogger(f"vex_manager.{__name__}")
 
 
 class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
+    del_key_pressed = QtCore.Signal()
     item_renamed = QtCore.Signal(str)
 
     def __init__(self) -> None:
@@ -63,3 +65,7 @@ class FileExplorerTreeWidget(QtWidgets.QTreeWidget):
         self.blockSignals(False)
 
         self.item_renamed.emit(new_file_path)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.del_key_pressed.emit()
