@@ -2,12 +2,15 @@ from PySide2 import QtWidgets
 from PySide2 import QtCore
 from PySide2 import QtGui
 
+import hou
+
 import logging
 import json
 import os
 
 from vex_manager.gui.vex_syntax_highlighter import VEXSyntaxHighlighter
 from vex_manager.config import ColorScheme
+from vex_manager.config import VEXSyntaxis
 import vex_manager.utils as utils
 
 
@@ -37,8 +40,49 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
         self.vex_syntax_highlighter = VEXSyntaxHighlighter(self.document())
 
+        self._create_connections()
         self._load_preferences()
         self.set_font_and_colors()
+
+    def _create_connections(self) -> None:
+        self.cursorPositionChanged.connect(self._highlight_current_line)
+
+    def _decrease_font_size(self) -> None:
+        point_size = self.font.pointSize()
+
+        if point_size > 6:
+            self.font.setPointSize(point_size - 1)
+            self.setFont(self.font)
+
+    def _delete_spaces(
+        self,
+        current_line_text: str,
+        text_cursor: QtGui.QTextCursor,
+        event: QtGui.QKeyEvent,
+    ) -> None:
+
+        if current_line_text.strip() == "":
+            if current_line_text and text_cursor.atBlockEnd():
+                delete_block = len(current_line_text) % self.tab_size
+
+                if delete_block == 0:
+                    delete_block = self.tab_size
+
+                for i in range(delete_block):
+                    super().keyPressEvent(event)
+            else:
+                super().keyPressEvent(event)
+        else:
+            super().keyPressEvent(event)
+
+    @staticmethod
+    def _display_help(text_cursor: QtGui.QTextCursor) -> None:
+        text_cursor.select(QtGui.QTextCursor.WordUnderCursor)
+        word_under_cursor = text_cursor.selectedText()
+
+        if word_under_cursor in VEXSyntaxis.VEX_FUNCTIONS:
+            desktop = hou.ui.curDesktop()
+            desktop.displayHelpPath(f"/vex/functions/{word_under_cursor}")
 
     def _handle_cursor_behavior(self, char: str) -> bool:
         text_cursor = self.textCursor()
@@ -61,6 +105,55 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
                         return True
 
         return False
+
+    def _highlight_current_line(self) -> None:
+        extra_selections = []
+
+        selection = QtWidgets.QTextEdit.ExtraSelection()
+        selection.format.setBackground(QtGui.QColor(40, 40, 40))
+        selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        selection.cursor = self.textCursor()
+        selection.cursor.clearSelection()
+
+        extra_selections.append(selection)
+
+        self.setExtraSelections(extra_selections)
+
+    def _increase_font_size(self) -> None:
+        point_size = self.font.pointSize()
+
+        if point_size < 30:
+            self.font.setPointSize(point_size + 1)
+            self.setFont(self.font)
+
+    def _indent_text(
+        self,
+        current_line_text: str,
+        text_cursor: QtGui.QTextCursor,
+        event: QtGui.QKeyEvent,
+    ) -> None:
+
+        leading_space = len(current_line_text) - len(current_line_text.lstrip())
+        cursor_position = text_cursor.position() - 1
+
+        if cursor_position >= 0:
+            text_at_cursor = self.toPlainText()[cursor_position]
+
+            if text_at_cursor in ["{", "(", "["]:
+                self.insertPlainText("\n\n")
+                self.insertPlainText("".ljust(leading_space))
+
+                text_cursor.movePosition(text_cursor.Up)
+                self.setTextCursor(text_cursor)
+
+                leading_space += self.tab_size
+
+            else:
+                super().keyPressEvent(event)
+
+            self.insertPlainText("".ljust(leading_space))
+        else:
+            super().keyPressEvent(event)
 
     def _insert_matching_delimiter(self, delimiter: str) -> None:
         if delimiter == "{":
@@ -124,34 +217,26 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
         ctrl = modifiers & QtCore.Qt.ControlModifier != 0
 
-        if key == QtCore.Qt.Key_Plus:
-            if ctrl:
-                point_size = self.font.pointSize()
-
-                if point_size < 30:
-                    self.font.setPointSize(point_size + 1)
-                    self.setFont(self.font)
-
-                return
-        elif key == QtCore.Qt.Key_Minus:
-            if ctrl:
-                point_size = self.font.pointSize()
-
-                if point_size > 6:
-                    self.font.setPointSize(point_size - 1)
-                    self.setFont(self.font)
-
-                return
-
         text_cursor = self.textCursor()
-        text_cursor_selected_text = text_cursor.selectedText()
-        text_cursor_block = text_cursor.block()
-        current_line_text = text_cursor_block.text()
+        block = text_cursor.block()
+        current_line_text = block.text()
 
-        if text_cursor_selected_text:
-            super().keyPressEvent(event)
+        if key == QtCore.Qt.Key_F1:
+            self._display_help(text_cursor)
 
             return
+
+        elif key == QtCore.Qt.Key_Plus:
+            if ctrl:
+                self._increase_font_size()
+
+                return
+
+        elif key == QtCore.Qt.Key_Minus:
+            if ctrl:
+                self._decrease_font_size()
+
+                return
 
         elif key == QtCore.Qt.Key_Tab:
             self.insertPlainText("".ljust(self.tab_size))
@@ -160,41 +245,23 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
         elif key == QtCore.Qt.Key_Backspace:
             if self.backspace_on_tab_space:
-                if current_line_text.strip() == "":
-                    if current_line_text and text_cursor.atBlockEnd():
-                        delete_block = len(current_line_text) % self.tab_size
+                self._delete_spaces(
+                    current_line_text=current_line_text,
+                    text_cursor=text_cursor,
+                    event=event,
+                )
 
-                        if delete_block == 0:
-                            delete_block = self.tab_size
-
-                        for i in range(delete_block):
-                            super().keyPressEvent(event)
-
-                        return
+                return
 
         elif key == QtCore.Qt.Key_Return or key == QtCore.Qt.Key_Enter:
             if self.auto_indent:
-                leading_space = len(current_line_text) - len(current_line_text.lstrip())
-                cursor_position = text_cursor.position() - 1
+                self._indent_text(
+                    current_line_text=current_line_text,
+                    text_cursor=text_cursor,
+                    event=event,
+                )
 
-                if cursor_position >= 0:
-                    text_at_cursor = self.toPlainText()[cursor_position]
-
-                    if text_at_cursor in ["{", "(", "["]:
-                        self.insertPlainText("\n\n")
-                        self.insertPlainText("".ljust(leading_space))
-
-                        text_cursor.movePosition(text_cursor.Up)
-                        self.setTextCursor(text_cursor)
-
-                        leading_space += self.tab_size
-
-                    else:
-                        super().keyPressEvent(event)
-
-                    self.insertPlainText("".ljust(leading_space))
-
-                    return
+                return
 
         elif key == QtCore.Qt.Key_BraceLeft:
             if self.insert_closing_brackets:
@@ -206,6 +273,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
             if self.insert_closing_brackets:
 
                 if self._handle_cursor_behavior("}"):
+
                     return
 
         elif key == QtCore.Qt.Key_ParenLeft:
