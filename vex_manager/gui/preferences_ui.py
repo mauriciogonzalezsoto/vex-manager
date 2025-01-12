@@ -412,7 +412,7 @@ class PreferencesUI(QtWidgets.QWidget):
         if item:
             color = QtWidgets.QColorDialog.getColor()
 
-            if color:
+            if color.isValid():
                 color = color.getRgb()
 
                 pixmap = QtGui.QPixmap(50, 50)
