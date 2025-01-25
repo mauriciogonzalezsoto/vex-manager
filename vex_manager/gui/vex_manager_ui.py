@@ -130,6 +130,7 @@ class VEXManagerUI(QtWidgets.QWidget):
                 preferences = json.load(file_for_read)
 
         self.library_path = preferences.get("library_path", "")
+        self.library_path = hou.text.expandString(self.library_path)
 
     def _open_preferences(self) -> None:
         self.preferences_ui.show()

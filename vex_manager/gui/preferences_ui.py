@@ -369,7 +369,6 @@ class PreferencesUI(QtWidgets.QWidget):
         library_path = hou.ui.selectFile(
             file_type=hou.fileType.Directory, title="Select Folder"
         )
-        library_path = hou.text.expandString(library_path)
 
         if library_path:
             self.library_path_line_edit.setText(library_path)
