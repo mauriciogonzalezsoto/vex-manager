@@ -226,7 +226,7 @@ class VEXPlainTextEdit(QtWidgets.QPlainTextEdit):
 
             return
 
-        elif key == QtCore.Qt.Key_Plus:
+        elif key == QtCore.Qt.Key_Plus or key == QtCore.Qt.Key_Equal:
             if ctrl:
                 self._increase_font_size()
 
